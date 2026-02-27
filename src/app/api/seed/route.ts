@@ -1,0 +1,94 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+const DEFAULT_SEARCHES = [
+  {
+    name: "Maricopa County Pre-Foreclosures",
+    search_params: {
+      city: "Phoenix",
+      state: "AZ",
+      county: "Maricopa",
+      distressTypes: ["Pre-Foreclosure", "NOD", "Lis Pendens"],
+    },
+    is_active: true,
+    frequency: "daily",
+  },
+  {
+    name: "Phoenix AZ Distressed Properties",
+    search_params: {
+      city: "Phoenix",
+      state: "AZ",
+      distressTypes: [
+        "Pre-Foreclosure",
+        "Auction",
+        "REO",
+        "Tax Lien",
+        "Vacant",
+        "Code Violation",
+      ],
+    },
+    is_active: true,
+    frequency: "daily",
+  },
+];
+
+export async function POST() {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    // Check if searches already exist for this user
+    const { data: existing } = await supabase
+      .from("saved_searches")
+      .select("name")
+      .eq("user_id", user.id);
+
+    const existingNames = new Set((existing || []).map((s) => s.name));
+
+    const toInsert = DEFAULT_SEARCHES.filter((s) => !existingNames.has(s.name)).map(
+      (s) => ({
+        user_id: user.id,
+        name: s.name,
+        filters: s.search_params as any,
+        is_active: s.is_active,
+        frequency: s.frequency,
+        result_count: 0,
+      })
+    );
+
+    if (toInsert.length === 0) {
+      return NextResponse.json({
+        message: "Default searches already exist",
+        created: 0,
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("saved_searches")
+      .insert(toInsert)
+      .select();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      message: "Default searches created",
+      created: data?.length || 0,
+      data,
+    });
+  } catch (error) {
+    console.error("POST /api/seed error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

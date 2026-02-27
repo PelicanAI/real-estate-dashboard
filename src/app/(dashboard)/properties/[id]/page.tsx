@@ -1,0 +1,327 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import {
+  ArrowLeft,
+  MapPin,
+  Bed,
+  Bath,
+  Ruler,
+  Calendar,
+  DollarSign,
+  User,
+  Phone,
+  Mail,
+  Home,
+  RefreshCw,
+  ExternalLink,
+  Plus,
+  Loader2,
+} from "lucide-react";
+import Link from "next/link";
+
+function fmt(val: number | null | undefined) {
+  if (!val) return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(val);
+}
+
+export default function PropertyDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [property, setProperty] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [enriching, setEnriching] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/properties/${id}`)
+      .then((r) => r.json())
+      .then((d) => setProperty(d.data || d))
+      .catch(() => toast.error("Failed to load property"))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handleEnrich = async () => {
+    setEnriching(true);
+    try {
+      const res = await fetch(`/api/properties/${id}/enrich`, { method: "POST" });
+      const data = await res.json();
+      setProperty(data.data || data);
+      toast.success("Property enriched with additional data");
+    } catch {
+      toast.error("Enrichment failed");
+    } finally {
+      setEnriching(false);
+    }
+  };
+
+  const handleCreateDeal = async () => {
+    try {
+      const res = await fetch("/api/deals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ property_id: id }),
+      });
+      if (!res.ok) throw new Error();
+      const deal = await res.json();
+      toast.success("Deal created");
+      router.push(`/deals/${deal.data?.id || deal.id}`);
+    } catch {
+      toast.error("Failed to create deal");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!property) {
+    return (
+      <div className="py-20 text-center">
+        <p className="text-muted-foreground">Property not found</p>
+      </div>
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p = property as any;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/properties">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{p.address as string}</h1>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              {p.city as string}, {p.state as string} {p.zip as string}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleEnrich} disabled={enriching}>
+            {enriching ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Enrich Data
+          </Button>
+          <Button onClick={handleCreateDeal}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Deal
+          </Button>
+        </div>
+      </div>
+
+      {p.distress_type ? (
+        <Badge variant="secondary" className="text-sm">
+          {p.distress_type as string}
+        </Badge>
+      ) : null}
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base">Property Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Est. Price</p>
+                  <p className="font-mono-numbers text-lg font-bold text-primary">
+                    {fmt(p.estimated_price as number)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Zestimate</p>
+                  <p className="font-mono-numbers text-lg font-bold">
+                    {fmt(p.zillow_zestimate as number)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">ARV</p>
+                  <p className="font-mono-numbers text-lg font-bold">
+                    {fmt(p.arv as number)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Est. Equity</p>
+                  <p className="font-mono-numbers text-lg font-bold text-emerald-400">
+                    {fmt(p.equity_estimate as number)}
+                  </p>
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {p.bedrooms && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Bed className="h-4 w-4 text-muted-foreground" />
+                    {p.bedrooms as number} Bedrooms
+                  </div>
+                )}
+                {p.bathrooms && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Bath className="h-4 w-4 text-muted-foreground" />
+                    {p.bathrooms as number} Bathrooms
+                  </div>
+                )}
+                {p.sqft && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Ruler className="h-4 w-4 text-muted-foreground" />
+                    {(p.sqft as number).toLocaleString()} sqft
+                  </div>
+                )}
+                {p.year_built && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    Built {p.year_built as number}
+                  </div>
+                )}
+              </div>
+
+              {p.lot_size && (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Lot: {p.lot_size as string}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base">Financial Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Default Amount</p>
+                  <p className="font-mono-numbers font-medium">{fmt(p.default_amount as number)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Loan Balance</p>
+                  <p className="font-mono-numbers font-medium">{fmt(p.loan_balance as number)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Recording Date</p>
+                  <p className="text-sm">{(p.recording_date as string) || "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Auction Date</p>
+                  <p className="text-sm">{(p.auction_date as string) || "—"}</p>
+                </div>
+              </div>
+
+              {p.estimated_price && (
+                <div className="mt-4 rounded-lg bg-accent/50 p-4">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Potential Commission (3% acquisition + 1% listing)
+                  </p>
+                  <p className="font-mono-numbers text-xl font-bold text-emerald-400">
+                    {fmt((p.estimated_price as number) * 0.04)}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base">Owner Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {p.owner_name && (
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  {p.owner_name as string}
+                </div>
+              )}
+              {p.owner_phone && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  {p.owner_phone as string}
+                </div>
+              )}
+              {p.owner_email && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  {p.owner_email as string}
+                </div>
+              )}
+              {p.owner_mailing_address && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Home className="h-4 w-4 text-muted-foreground" />
+                  {p.owner_mailing_address as string}
+                </div>
+              )}
+              {!p.owner_name && !p.owner_phone && !p.owner_email && (
+                <p className="text-sm text-muted-foreground">
+                  No owner info available. Try enriching.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base">Links</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {p.zillow_url && (
+                <a
+                  href={p.zillow_url as string}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  View on Zillow
+                </a>
+              )}
+              {p.source_url && (
+                <a
+                  href={p.source_url as string}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Original Source
+                </a>
+              )}
+              {p.source && (
+                <p className="text-xs text-muted-foreground">
+                  Source: {p.source as string}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
