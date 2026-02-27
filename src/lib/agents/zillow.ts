@@ -344,10 +344,20 @@ function mapRapidApiListing(
   const prop = emptyScrapedProperty(AGENT_NAME);
 
   prop.sourceId = String(listing.zpid ?? listing.id ?? '');
-  prop.address = String(listing.address ?? listing.streetAddress ?? '');
-  prop.city = String(listing.city ?? city);
-  prop.state = String(listing.state ?? state);
-  prop.zip = String(listing.zipcode ?? listing.zip ?? '');
+
+  // Handle address as object or string
+  if (listing.address && typeof listing.address === 'object') {
+    const addr = listing.address as Record<string, unknown>;
+    prop.address = String(addr.street ?? addr.streetAddress ?? '');
+    prop.city = String(addr.city ?? city);
+    prop.state = String(addr.state ?? state);
+    prop.zip = String(addr.zipcode ?? addr.zip ?? '');
+  } else {
+    prop.address = String(listing.address ?? listing.streetAddress ?? '');
+    prop.city = String(listing.city ?? city);
+    prop.state = String(listing.state ?? state);
+    prop.zip = String(listing.zipcode ?? listing.zip ?? '');
+  }
   prop.county = String(listing.county ?? '');
 
   prop.latitude = typeof listing.latitude === 'number' ? listing.latitude : null;
