@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
     await supabase.from("scrape_logs").insert({
       source: "manual_search",
       status: "completed",
-      records_found: result.totalFound,
-      records_added: result.totalSaved,
+      properties_found: result.totalFound,
+      new_properties: result.totalSaved,
     });
 
     return NextResponse.json({
@@ -47,10 +47,8 @@ export async function POST(request: NextRequest) {
       await supabase.from("scrape_logs").insert({
         source: "manual_search",
         status: "failed",
-        errors: {
-          message:
+        error_message:
             error instanceof Error ? error.message : "Unknown error",
-        },
       });
     } catch {
       // Ignore logging failure

@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
     if (state) query = query.ilike("state", `%${state}%`);
     if (zip) query = query.eq("zip", zip);
     if (distressType) query = query.eq("distress_type", distressType);
-    if (minPrice) query = query.gte("estimated_value", parseFloat(minPrice));
-    if (maxPrice) query = query.lte("estimated_value", parseFloat(maxPrice));
+    if (minPrice) query = query.gte("estimated_price", parseFloat(minPrice));
+    if (maxPrice) query = query.lte("estimated_price", parseFloat(maxPrice));
     if (hasEquity === "true") query = query.gt("equity_estimate", 0);
     if (hasEquity === "false") query = query.lte("equity_estimate", 0);
     if (source) query = query.eq("source", source);

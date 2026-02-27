@@ -52,11 +52,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, filters, frequency } = body;
+    const { name, search_params, frequency } = body;
 
-    if (!name || !filters) {
+    if (!name || !search_params) {
       return NextResponse.json(
-        { error: "name and filters are required" },
+        { error: "name and search_params are required" },
         { status: 400 }
       );
     }
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         name,
-        filters,
+        search_params,
         frequency: frequency || "daily",
         is_active: true,
       })

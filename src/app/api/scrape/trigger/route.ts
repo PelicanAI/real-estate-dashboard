@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const filters = savedSearch.filters as Record<string, unknown>;
+    const filters = savedSearch.search_params as Record<string, unknown>;
 
     // Create a running scrape log
     const { data: scrapeLog, error: logError } = await supabase
@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
         .from("scrape_logs")
         .update({
           status: "completed",
-          records_found: result.totalFound,
-          records_added: result.totalSaved,
+          properties_found: result.totalFound,
+          new_properties: result.totalSaved,
           duration_ms: durationMs,
         })
         .eq("id", scrapeLog!.id);
@@ -92,12 +92,10 @@ export async function POST(request: NextRequest) {
         .update({
           status: "failed",
           duration_ms: durationMs,
-          errors: {
-            message:
+          error_message:
               scrapeError instanceof Error
                 ? scrapeError.message
                 : "Unknown error",
-          },
         })
         .eq("id", scrapeLog!.id);
 

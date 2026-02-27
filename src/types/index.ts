@@ -142,7 +142,7 @@ export interface SearchParams {
   /** Sorting */
   sortBy?:
     | "score"
-    | "estimated_value"
+    | "estimated_price"
     | "equity_estimate"
     | "profit_estimate"
     | "created_at"

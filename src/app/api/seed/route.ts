@@ -65,7 +65,7 @@ export async function POST() {
       (s) => ({
         user_id: user.id,
         name: s.name,
-        filters: s.search_params as any,
+        search_params: s.search_params as any,
         is_active: s.is_active,
         frequency: s.frequency,
       })

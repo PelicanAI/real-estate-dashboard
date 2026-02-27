@@ -34,7 +34,7 @@ export type Database = {
           sqft: number | null;
           lot_size: number | null;
           year_built: number | null;
-          estimated_value: number | null;
+          estimated_price: number | null;
           assessed_value: number | null;
           last_sale_price: number | null;
           last_sale_date: string | null;
@@ -84,7 +84,7 @@ export type Database = {
           sqft?: number | null;
           lot_size?: number | null;
           year_built?: number | null;
-          estimated_value?: number | null;
+          estimated_price?: number | null;
           assessed_value?: number | null;
           last_sale_price?: number | null;
           last_sale_date?: string | null;
@@ -134,7 +134,7 @@ export type Database = {
           sqft?: number | null;
           lot_size?: number | null;
           year_built?: number | null;
-          estimated_value?: number | null;
+          estimated_price?: number | null;
           assessed_value?: number | null;
           last_sale_price?: number | null;
           last_sale_date?: string | null;
@@ -311,12 +311,12 @@ export type Database = {
           updated_at: string;
           user_id: string;
           name: string;
-          filters: Json;
+          search_params: Json;
           notify_email: boolean;
           notify_push: boolean;
           frequency: string;
           last_run_at: string | null;
-          result_count: number;
+          results_count: number;
           is_active: boolean;
         };
         Insert: {
@@ -325,12 +325,12 @@ export type Database = {
           updated_at?: string;
           user_id: string;
           name: string;
-          filters: Json;
+          search_params: Json;
           notify_email?: boolean;
           notify_push?: boolean;
           frequency?: string;
           last_run_at?: string | null;
-          result_count?: number;
+          results_count?: number;
           is_active?: boolean;
         };
         Update: {
@@ -339,12 +339,12 @@ export type Database = {
           updated_at?: string;
           user_id?: string;
           name?: string;
-          filters?: Json;
+          search_params?: Json;
           notify_email?: boolean;
           notify_push?: boolean;
           frequency?: string;
           last_run_at?: string | null;
-          result_count?: number;
+          results_count?: number;
           is_active?: boolean;
         };
         Relationships: [
@@ -360,40 +360,40 @@ export type Database = {
       scrape_logs: {
         Row: {
           id: string;
-          created_at: string;
+          started_at: string;
           source: string;
           status: string;
-          records_found: number;
-          records_added: number;
+          properties_found: number;
+          new_properties: number;
           records_updated: number;
           records_skipped: number;
-          errors: Json | null;
+          error_message: string | null;
           duration_ms: number | null;
           metadata: Json | null;
         };
         Insert: {
           id?: string;
-          created_at?: string;
+          started_at?: string;
           source: string;
           status: string;
-          records_found?: number;
-          records_added?: number;
+          properties_found?: number;
+          new_properties?: number;
           records_updated?: number;
           records_skipped?: number;
-          errors?: Json | null;
+          error_message?: string | null;
           duration_ms?: number | null;
           metadata?: Json | null;
         };
         Update: {
           id?: string;
-          created_at?: string;
+          started_at?: string;
           source?: string;
           status?: string;
-          records_found?: number;
-          records_added?: number;
+          properties_found?: number;
+          new_properties?: number;
           records_updated?: number;
           records_skipped?: number;
-          errors?: Json | null;
+          error_message?: string | null;
           duration_ms?: number | null;
           metadata?: Json | null;
         };

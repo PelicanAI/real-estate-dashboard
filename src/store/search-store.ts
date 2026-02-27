@@ -12,7 +12,7 @@ interface SearchState {
 
   // Actions
   fetchSavedSearches: () => Promise<void>;
-  createSavedSearch: (data: Omit<SavedSearch, 'id' | 'lastRun' | 'result_count' | 'createdAt' | 'updatedAt'>) => Promise<SavedSearch | null>;
+  createSavedSearch: (data: Omit<SavedSearch, 'id' | 'lastRun' | 'results_count' | 'createdAt' | 'updatedAt'>) => Promise<SavedSearch | null>;
   toggleActive: (id: string) => Promise<void>;
   triggerSearch: (id: string) => Promise<void>;
   clearError: () => void;
@@ -148,7 +148,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
             ? {
                 ...s,
                 lastRun: new Date().toISOString(),
-                result_count: result.result_count ?? s.result_count,
+                results_count: result.results_count ?? s.results_count,
               }
             : s
         ),

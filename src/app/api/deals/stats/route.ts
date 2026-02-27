@@ -8,7 +8,7 @@ export async function GET() {
     // Fetch all deals with property data
     const { data: deals, error } = await supabase
       .from("deals")
-      .select("*, property:properties(estimated_value)")
+      .select("*, property:properties(estimated_price)")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -43,14 +43,14 @@ export async function GET() {
 
     // Pipeline value: sum of estimated property values in active pipeline
     const pipelineValue = pipelineDeals.reduce((sum, deal) => {
-      const prop = deal.property as { estimated_value: number | null } | null;
-      return sum + (prop?.estimated_value ?? 0);
+      const prop = deal.property as { estimated_price: number | null } | null;
+      return sum + (prop?.estimated_price ?? 0);
     }, 0);
 
     // Expected commissions: pipeline deals' potential commissions
     const expectedCommission = pipelineDeals.reduce((sum, deal) => {
-      const prop = deal.property as { estimated_value: number | null } | null;
-      const estimated = prop?.estimated_value ?? 0;
+      const prop = deal.property as { estimated_price: number | null } | null;
+      const estimated = prop?.estimated_price ?? 0;
       // 3% acquisition + 1% listing potential
       return sum + estimated * 0.04;
     }, 0);

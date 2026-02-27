@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     query = query
-      .order("created_at", { ascending: false })
+      .order("started_at", { ascending: false })
       .range(from, to);
 
     const { data, error, count } = await query;

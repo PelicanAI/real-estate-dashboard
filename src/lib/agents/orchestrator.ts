@@ -223,7 +223,7 @@ export async function runSavedSearch(savedSearchId: string): Promise<Orchestrato
     .eq('id', savedSearchId);
 
   // Run the search with the saved filters
-  const params: SearchParams = savedSearch.filters ?? {};
+  const params: SearchParams = (savedSearch.search_params ?? {}) as SearchParams;
   const result = await runSearch(params);
 
   // Log the scrape run
@@ -237,7 +237,7 @@ export async function runSavedSearch(savedSearchId: string): Promise<Orchestrato
   await supabase
     .from('saved_searches')
     .update({
-      result_count: result.totalSaved,
+      results_count: result.totalSaved as any,
       updated_at: new Date().toISOString(),
     })
     .eq('id', savedSearchId);
@@ -344,7 +344,7 @@ export async function saveProperties(properties: ScrapedProperty[]): Promise<num
       sqft: p.sqft,
       lot_size: p.lotSize,
       year_built: p.yearBuilt,
-      estimated_value: p.estimatedValue ?? p.zestimate ?? p.listPrice,
+      estimated_price: p.estimatedValue ?? p.zestimate ?? p.listPrice,
       last_sale_price: p.lastSalePrice,
       last_sale_date: p.lastSaleDate,
       owner_name: p.ownerName,
