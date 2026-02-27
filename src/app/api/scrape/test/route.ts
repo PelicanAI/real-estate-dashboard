@@ -9,25 +9,10 @@ export const maxDuration = 60;
 export async function GET(request: NextRequest) {
   const results: Record<string, any> = {};
 
-  // Direct API test with full searchQueryState URL
+  // Test bymapbounds endpoint (Phoenix bounds)
   try {
-    const searchQueryState = JSON.stringify({
-      mapBounds: {
-        north: 33.4484 + 0.25,
-        south: 33.4484 - 0.25,
-        east: -112.0740 + 0.25,
-        west: -112.0740 - 0.25,
-      },
-      isMapVisible: true,
-      filterState: {
-        sort: { value: 'globalrelevanceex' },
-        isAllHomes: { value: true },
-      },
-      isListVisible: true,
-    });
-    const testZillowUrl = `https://www.zillow.com/phoenix-az/?searchQueryState=${encodeURIComponent(searchQueryState)}`;
-    const directRes = await fetch(
-      `https://real-estate101.p.rapidapi.com/api/search/byurl?url=${encodeURIComponent(testZillowUrl)}&page=1`,
+    const bmRes = await fetch(
+      'https://real-estate101.p.rapidapi.com/api/search/bymapbounds?north=33.70&south=33.20&east=-111.82&west=-112.32&page=1',
       {
         headers: {
           'X-RapidAPI-Key': process.env.RAPIDAPI_KEY!,
@@ -35,19 +20,43 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-    const directText = await directRes.text();
-    let directData: any = {};
-    try { directData = JSON.parse(directText); } catch {}
-    results.zillow_direct_test = {
-      status: directRes.status,
-      success: directData.success,
-      resultCount: directData.results?.length ?? 0,
-      totalCount: directData.totalCount,
-      bodyPreview: directRes.status !== 200 ? directText.slice(0, 200) : undefined,
-      urlSent: testZillowUrl,
+    const bmText = await bmRes.text();
+    let bmData: any = {};
+    try { bmData = JSON.parse(bmText); } catch {}
+    results.zillow_bymapbounds_test = {
+      status: bmRes.status,
+      success: bmData.success,
+      resultCount: bmData.results?.length ?? 0,
+      totalCount: bmData.totalCount,
+      bodyPreview: bmRes.status !== 200 ? bmText.slice(0, 200) : undefined,
     };
   } catch (err) {
-    results.zillow_direct_test = { error: (err as Error).message };
+    results.zillow_bymapbounds_test = { error: (err as Error).message };
+  }
+
+  // Test bymapbounds with PreForeclosure filter
+  try {
+    const pfRes = await fetch(
+      'https://real-estate101.p.rapidapi.com/api/search/bymapbounds?north=33.70&south=33.20&east=-111.82&west=-112.32&page=1&status=PreForeclosure',
+      {
+        headers: {
+          'X-RapidAPI-Key': process.env.RAPIDAPI_KEY!,
+          'X-RapidAPI-Host': 'real-estate101.p.rapidapi.com',
+        },
+      }
+    );
+    const pfText = await pfRes.text();
+    let pfData: any = {};
+    try { pfData = JSON.parse(pfText); } catch {}
+    results.zillow_preforeclosure_test = {
+      status: pfRes.status,
+      success: pfData.success,
+      resultCount: pfData.results?.length ?? 0,
+      totalCount: pfData.totalCount,
+      bodyPreview: pfRes.status !== 200 ? pfText.slice(0, 200) : undefined,
+    };
+  } catch (err) {
+    results.zillow_preforeclosure_test = { error: (err as Error).message };
   }
 
   // Test Zillow/RapidAPI

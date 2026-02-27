@@ -86,11 +86,15 @@ export async function runSearch(params: SearchParams): Promise<OrchestratorResul
   const wantsPreForeclosure = distressTypes.length === 0 || distressTypes.some(d => ['Pre-Foreclosure', 'NOD', 'Lis Pendens'].includes(d));
   const wantsREO = distressTypes.length === 0 || distressTypes.includes('REO');
 
-  // Zillow - always run unless source is explicitly set to something else
+  // Zillow - run per distress type for targeted filtering, or once with no filter
   if (!params.source || params.source === 'zillow') {
-    const zillowDistress: string | undefined =
-      distressTypes.length === 1 ? distressTypes[0] : undefined;
-    agentPromises.push(zillowSearch(city, state, zillowDistress));
+    if (distressTypes.length > 0) {
+      for (const dt of distressTypes) {
+        agentPromises.push(zillowSearch(city, state, dt));
+      }
+    } else {
+      agentPromises.push(zillowSearch(city, state));
+    }
   }
 
   // Foreclosure sites - run for foreclosure/reo types

@@ -84,37 +84,40 @@ export async function searchProperties(
 
   try {
     if (useApi) {
-      // ── RapidAPI path (byurl endpoint) ──────────────────────────
-      // The byurl endpoint requires a full Zillow URL with searchQueryState including mapBounds
+      // ── RapidAPI path (bymapbounds endpoint) ──────────────────────
       const citySlug = city.toLowerCase().replace(/\s+/g, '-');
       const stateSlug = state.toLowerCase();
       const slug = `${citySlug}-${stateSlug}`;
       const coords = CITY_COORDS[slug] || { lat: 33.4484, lng: -112.0740 }; // default Phoenix
       const offset = 0.25; // ~17 miles
-      const searchQueryState = JSON.stringify({
-        mapBounds: {
-          north: coords.lat + offset,
-          south: coords.lat - offset,
-          east: coords.lng + offset,
-          west: coords.lng - offset,
-        },
-        isMapVisible: true,
-        filterState: {
-          sort: { value: 'globalrelevanceex' },
-          isAllHomes: { value: true },
-        },
-        isListVisible: true,
-      });
-      const zillowUrl = `https://www.zillow.com/${slug}/?searchQueryState=${encodeURIComponent(searchQueryState)}`;
-      console.log('[zillow] Searching with URL:', zillowUrl);
+
       const params: Record<string, string> = {
-        url: zillowUrl,
+        north: String(coords.lat + offset),
+        south: String(coords.lat - offset),
+        east: String(coords.lng + offset),
+        west: String(coords.lng - offset),
         page: '1',
       };
 
+      // Map distress types to Zillow status filters
+      if (distressType) {
+        const dt = distressType.toLowerCase();
+        if (dt.includes('pre-foreclosure') || dt.includes('nod') || dt.includes('lis pendens')) {
+          params.status = 'PreForeclosure';
+        } else if (dt.includes('auction')) {
+          params.status = 'ForSaleForeclosure';
+        } else if (dt.includes('foreclosure')) {
+          params.status = 'ForSaleForeclosure';
+        } else if (dt.includes('reo') || dt.includes('bank')) {
+          params.status = 'RecentlySold';
+        }
+      }
+
+      console.log('[zillow] bymapbounds params:', JSON.stringify(params));
+
       await randomDelay(1000, 2000);
       requestCount++;
-      const data = (await rapidApiFetch('/api/search/byurl', params)) as {
+      const data = (await rapidApiFetch('/api/search/bymapbounds', params)) as {
         results?: Array<Record<string, unknown>>;
         props?: Array<Record<string, unknown>>;
         searchResults?: { listResults?: Array<Record<string, unknown>> };
