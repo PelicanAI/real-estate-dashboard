@@ -36,6 +36,25 @@ interface ScrapeLog {
   started_at: string;
 }
 
+const DISABLED_PATTERNS = [
+  /disabled/i,
+  /not supported in serverless/i,
+  /404 on trial/i,
+  /endpoint not available/i,
+  /requires browser automation/i,
+  /target sites? dead/i,
+];
+
+function cleanLogError(raw: string | null): string | null {
+  if (!raw) return null;
+  const parts = raw.split(";").map((s) => s.trim()).filter(Boolean);
+  const meaningful = parts.filter(
+    (p) => !DISABLED_PATTERNS.some((re) => re.test(p))
+  );
+  if (meaningful.length === 0) return null;
+  return meaningful.join("; ");
+}
+
 export default function OverviewPage() {
   const [stats, setStats] = useState<OverviewStats>({
     totalProperties: 0,
@@ -235,40 +254,47 @@ export default function OverviewPage() {
             </Link>
           </div>
           <div className="space-y-2">
-            {logs.map((log) => (
-              <div
-                key={log.id}
-                className="flex items-center gap-3 rounded-md border border-border/30 px-4 py-2.5 text-sm"
-              >
-                {log.status === "completed" ? (
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-                ) : log.status === "failed" ? (
-                  <XCircle className="h-4 w-4 shrink-0 text-destructive" />
-                ) : (
-                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-amber-400" />
-                )}
-                <span className="font-medium">{log.source}</span>
-                <span className="text-muted-foreground">
-                  {log.properties_found ?? 0} found, {log.new_properties ?? 0}{" "}
-                  new
-                </span>
-                {log.duration_ms != null && (
-                  <span className="font-mono-numbers text-xs text-muted-foreground">
-                    {(log.duration_ms / 1000).toFixed(1)}s
+            {logs.map((log) => {
+              const cleanError = cleanLogError(log.error_message);
+              const status =
+                log.status === "failed" && !cleanError
+                  ? "completed"
+                  : log.status;
+              return (
+                <div
+                  key={log.id}
+                  className="flex items-center gap-3 rounded-md border border-border/30 px-4 py-2.5 text-sm"
+                >
+                  {status === "completed" ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                  ) : status === "failed" ? (
+                    <XCircle className="h-4 w-4 shrink-0 text-destructive" />
+                  ) : (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-amber-400" />
+                  )}
+                  <span className="font-medium">{log.source}</span>
+                  <span className="text-muted-foreground">
+                    {log.properties_found ?? 0} found,{" "}
+                    {log.new_properties ?? 0} new
                   </span>
-                )}
-                {log.error_message && (
-                  <span className="text-xs text-destructive">
-                    {log.error_message}
+                  {log.duration_ms != null && (
+                    <span className="font-mono-numbers text-xs text-muted-foreground">
+                      {(log.duration_ms / 1000).toFixed(1)}s
+                    </span>
+                  )}
+                  {cleanError && (
+                    <span className="truncate text-xs text-destructive max-w-[300px]">
+                      {cleanError}
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(log.started_at), {
+                      addSuffix: true,
+                    })}
                   </span>
-                )}
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(log.started_at), {
-                    addSuffix: true,
-                  })}
-                </span>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

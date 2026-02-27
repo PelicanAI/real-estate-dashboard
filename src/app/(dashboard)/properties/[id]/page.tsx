@@ -54,8 +54,16 @@ export default function PropertyDetailPage() {
     try {
       const res = await fetch(`/api/properties/${id}/enrich`, { method: "POST" });
       const data = await res.json();
-      setProperty(data.data || data);
-      toast.success("Property enriched with additional data");
+      if (data.data) setProperty(data.data);
+      const fields = data.enrichedFields as string[] | undefined;
+      if (fields && fields.length > 0) {
+        toast.success(`Enriched: ${fields.join(", ")}`);
+      } else {
+        toast.info("No new data found from ATTOM");
+      }
+      if (data.errors?.length) {
+        toast.warning(`Some endpoints failed: ${data.errors.join(", ")}`);
+      }
     } catch {
       toast.error("Enrichment failed");
     } finally {
@@ -126,7 +134,7 @@ export default function PropertyDetailPage() {
             ) : (
               <RefreshCw className="mr-2 h-4 w-4" />
             )}
-            Enrich Data
+            {p.owner_name || p.arv_estimate ? "Re-Enrich" : "Enrich Data"}
           </Button>
           {zillowUrl && (
             <a href={zillowUrl} target="_blank" rel="noopener noreferrer">
@@ -161,15 +169,15 @@ export default function PropertyDetailPage() {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Zestimate</p>
+                  <p className="text-xs text-muted-foreground">Assessed Value</p>
                   <p className="font-mono-numbers text-lg font-bold">
-                    {fmt(p.zillow_zestimate as number)}
+                    {fmt(p.assessed_value as number)}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">ARV</p>
                   <p className="font-mono-numbers text-lg font-bold">
-                    {fmt(p.arv as number)}
+                    {fmt(p.arv_estimate as number)}
                   </p>
                 </div>
                 <div className="space-y-1">

@@ -51,9 +51,20 @@ export async function GET(request: NextRequest) {
 
     const totalCount = count ?? 0;
 
+    // Get unfiltered total for "X of Y" display
+    const hasFilters = !!(city || state || zip || distressType || minPrice || maxPrice || hasEquity || source || address || minBeds);
+    let totalUnfiltered = totalCount;
+    if (hasFilters) {
+      const { count: unfilteredCount } = await supabase
+        .from("properties")
+        .select("*", { count: "exact", head: true });
+      totalUnfiltered = unfilteredCount ?? totalCount;
+    }
+
     return NextResponse.json({
       data,
       count: totalCount,
+      totalUnfiltered,
       page,
       totalPages: Math.ceil(totalCount / limit),
     });

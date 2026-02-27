@@ -13,9 +13,10 @@ import {
   normalizeAddress,
 } from './types';
 import { searchProperties as zillowSearch } from './zillow';
-import { searchNODFilings } from './county-records';
-import { searchAllForeclosureSites } from './foreclosure-sites';
-import { searchPreForeclosures, searchForeclosures } from './attom';
+// Disabled agents (kept for reference, removed from scraping):
+// - attom searchPreForeclosures/searchForeclosures: 404 on trial plan
+// - county-records searchNODFilings: requires browser automation
+// - foreclosure-sites searchAllForeclosureSites: target sites dead
 import { enrichProperties } from './enricher';
 
 // ─── Supabase Service Client ───────────────────────────────────────
@@ -82,9 +83,6 @@ export async function runSearch(params: SearchParams): Promise<OrchestratorResul
   // ── Step 1: Determine which agents to run ────────────────────
   const agentPromises: Promise<AgentResult>[] = [];
   const distressTypes = params.distressTypes ?? [];
-  const wantsForeclosure = distressTypes.length === 0 || distressTypes.some(d => ['Auction', 'Pre-Foreclosure', 'NOD'].includes(d));
-  const wantsPreForeclosure = distressTypes.length === 0 || distressTypes.some(d => ['Pre-Foreclosure', 'NOD', 'Lis Pendens'].includes(d));
-  const wantsREO = distressTypes.length === 0 || distressTypes.includes('REO');
 
   // Zillow - run per distress type for targeted filtering, or once with no filter
   if (!params.source || params.source === 'zillow') {
@@ -97,32 +95,8 @@ export async function runSearch(params: SearchParams): Promise<OrchestratorResul
     }
   }
 
-  // Foreclosure sites - run for foreclosure/reo types
-  if (!params.source || params.source === 'foreclosure-sites') {
-    if (wantsForeclosure || wantsREO) {
-      agentPromises.push(searchAllForeclosureSites(city, state));
-    }
-  }
-
-  // ATTOM - run if API key is available
-  if ((!params.source || params.source === 'attom') && process.env.ATTOM_API_KEY) {
-    if (wantsPreForeclosure) {
-      agentPromises.push(searchPreForeclosures(city, state));
-    }
-    if (wantsForeclosure) {
-      agentPromises.push(searchForeclosures(city, state));
-    }
-  }
-
-  // County records - run for pre-foreclosure in supported counties
-  if (!params.source || params.source === 'county-records') {
-    if (wantsPreForeclosure) {
-      // Default to searching the last 30 days
-      agentPromises.push(
-        searchNODFilings(guessCounty(city, state), state),
-      );
-    }
-  }
+  // Disabled agents removed — only Zillow is active for scraping.
+  // ATTOM property/detail and avm/detail are used for per-property enrichment only.
 
   // ── Step 2: Run agents in parallel ───────────────────────────
   const settledResults = await Promise.allSettled(agentPromises);

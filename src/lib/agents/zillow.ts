@@ -322,6 +322,23 @@ export async function getZestimate(address: string): Promise<number | null> {
   }
 }
 
+// ─── Distress Type Mapping ─────────────────────────────────────────
+
+/**
+ * Map Zillow homeStatus / marketingStatus to a distress type.
+ * Returns null for regular (non-distressed) listings.
+ */
+function mapHomeStatusToDistressType(listing: Record<string, unknown>): string | null {
+  const status = String(
+    listing.homeStatus ?? listing.marketingStatus ?? listing.status ?? listing.statusType ?? ''
+  ).toLowerCase();
+
+  if (status.includes('pre_foreclosure') || status.includes('preforeclosure')) return 'Pre-Foreclosure';
+  if (status.includes('foreclosure') || status.includes('auction')) return 'Auction';
+  if (status.includes('foreclosed') || status.includes('reo')) return 'REO';
+  return null;
+}
+
 // ─── Internal Helpers ──────────────────────────────────────────────
 
 function buildZillowSearchUrl(city: string, state: string, distressType?: DistressType): string {
@@ -409,7 +426,13 @@ function mapRapidApiListing(
   const detailUrl = listing.detailUrl ?? listing.url;
   prop.sourceUrl = detailUrl ? String(detailUrl) : null;
 
-  if (distressType) prop.distressTypes = [distressType];
+  // Set distress type: prefer the explicit filter from the search, then try to infer from listing status
+  const inferredDistress = mapHomeStatusToDistressType(listing);
+  if (distressType) {
+    prop.distressTypes = [distressType];
+  } else if (inferredDistress) {
+    prop.distressTypes = [inferredDistress];
+  }
 
   prop.rawData = listing;
   return prop;
@@ -444,7 +467,12 @@ function mapNextDataListing(
   const detailUrl = item.detailUrl ?? item.url;
   prop.sourceUrl = detailUrl ? `https://www.zillow.com${detailUrl}` : null;
 
-  if (distressType) prop.distressTypes = [distressType];
+  const inferredDistress = mapHomeStatusToDistressType(item);
+  if (distressType) {
+    prop.distressTypes = [distressType];
+  } else if (inferredDistress) {
+    prop.distressTypes = [inferredDistress];
+  }
 
   prop.rawData = item;
   return prop;

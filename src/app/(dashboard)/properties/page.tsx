@@ -56,6 +56,7 @@ export default function PropertiesPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalUnfiltered, setTotalUnfiltered] = useState(0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortIndex, setSortIndex] = useState(0);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
@@ -90,6 +91,7 @@ export default function PropertiesPage() {
         setProperties(data.data || []);
         setTotalPages(data.totalPages || 1);
         setTotalCount(data.count || 0);
+        setTotalUnfiltered(data.totalUnfiltered ?? data.count ?? 0);
         setPage(pageNum);
 
         // Track last updated from first property's created_at
@@ -138,10 +140,25 @@ export default function PropertiesPage() {
         <div>
           <h1 className="text-heading text-lg">Properties</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            <span className="font-mono-numbers font-semibold text-foreground">
-              {totalCount.toLocaleString()}
-            </span>{" "}
-            properties
+            {totalCount < totalUnfiltered ? (
+              <>
+                <span className="font-mono-numbers font-semibold text-foreground">
+                  {totalCount.toLocaleString()}
+                </span>{" "}
+                of{" "}
+                <span className="font-mono-numbers font-semibold text-foreground">
+                  {totalUnfiltered.toLocaleString()}
+                </span>{" "}
+                properties
+              </>
+            ) : (
+              <>
+                <span className="font-mono-numbers font-semibold text-foreground">
+                  {totalCount.toLocaleString()}
+                </span>{" "}
+                properties
+              </>
+            )}
             {lastUpdated && (
               <>
                 {" · "}Last updated{" "}

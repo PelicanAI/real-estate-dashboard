@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchProperties as zillowSearch } from "@/lib/agents/zillow";
-import { searchPreForeclosures, searchForeclosures } from "@/lib/agents/attom";
-import { searchNODFilings } from "@/lib/agents/county-records";
-import { searchAllForeclosureSites } from "@/lib/agents/foreclosure-sites";
 
 export const maxDuration = 60;
 
 export async function GET(request: NextRequest) {
   const results: Record<string, any> = {};
+
+  // ── Zillow / RapidAPI Tests ────────────────────────────────────
 
   // Test bymapbounds endpoint (Phoenix bounds)
   try {
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest) {
     results.zillow_preforeclosure_test = { error: (err as Error).message };
   }
 
-  // Test Zillow/RapidAPI
+  // Test Zillow agent
   try {
     const zillowResult = await zillowSearch("Phoenix", "AZ");
     results.zillow = {
@@ -77,58 +76,83 @@ export async function GET(request: NextRequest) {
     results.zillow = { status: "error", message: (err as Error).message };
   }
 
-  // Test ATTOM
-  try {
-    const attomResult = await searchPreForeclosures("Phoenix", "AZ");
-    results.attom_preforeclosure = {
-      status: "ok",
-      found: attomResult.properties.length,
-      errors: attomResult.errors.map(e => e.message),
-      duration: attomResult.durationMs,
-    };
-  } catch (err) {
-    results.attom_preforeclosure = { status: "error", message: (err as Error).message };
+  // ── ATTOM Enrichment Endpoint Tests ────────────────────────────
+
+  const attomKey = process.env.ATTOM_API_KEY;
+  if (attomKey) {
+    const attomHeaders = { Accept: "application/json", apikey: attomKey };
+    const testAddr1 = encodeURIComponent("4290 E McDowell Rd");
+    const testAddr2 = encodeURIComponent("Phoenix, AZ");
+
+    // Test property/basicprofile
+    try {
+      const res = await fetch(
+        `https://api.gateway.attomdata.com/propertyapi/v1.0.0/property/basicprofile?address1=${testAddr1}&address2=${testAddr2}`,
+        { headers: attomHeaders }
+      );
+      const data = await res.json();
+      const prop = data?.property?.[0];
+      results.attom_basicprofile_test = {
+        status: res.status,
+        hasProperty: !!prop,
+        ownerName: prop?.assessment?.owner?.owner1?.fullName ?? null,
+        error: data?.status?.msg !== "SuccessWithResult" ? data?.status?.msg : null,
+      };
+    } catch (err) {
+      results.attom_basicprofile_test = { error: (err as Error).message };
+    }
+
+    // Test property/detail
+    try {
+      const res = await fetch(
+        `https://api.gateway.attomdata.com/propertyapi/v1.0.0/property/detail?address1=${testAddr1}&address2=${testAddr2}`,
+        { headers: attomHeaders }
+      );
+      const data = await res.json();
+      const prop = data?.property?.[0];
+      results.attom_detail_test = {
+        status: res.status,
+        hasProperty: !!prop,
+        ownerName: prop?.assessment?.owner?.owner1?.fullName ?? null,
+        sampleFields: prop ? Object.keys(prop).slice(0, 10) : [],
+        error: data?.status?.msg !== "SuccessWithResult" ? data?.status?.msg : null,
+      };
+    } catch (err) {
+      results.attom_detail_test = { error: (err as Error).message };
+    }
+
+    // Test avm/detail
+    try {
+      const res = await fetch(
+        `https://api.gateway.attomdata.com/propertyapi/v1.0.0/avm/detail?address1=${testAddr1}&address2=${testAddr2}`,
+        { headers: attomHeaders }
+      );
+      const data = await res.json();
+      const prop = data?.property?.[0];
+      results.attom_avm_test = {
+        status: res.status,
+        hasProperty: !!prop,
+        avmValue: prop?.avm?.amount?.value ?? null,
+        error: data?.status?.msg !== "SuccessWithResult" ? data?.status?.msg : null,
+      };
+    } catch (err) {
+      results.attom_avm_test = { error: (err as Error).message };
+    }
+  } else {
+    results.attom_tests = { skipped: true, reason: "ATTOM_API_KEY not set" };
   }
 
-  try {
-    const attomFcResult = await searchForeclosures("Phoenix", "AZ");
-    results.attom_foreclosure = {
-      status: "ok",
-      found: attomFcResult.properties.length,
-      errors: attomFcResult.errors.map(e => e.message),
-      duration: attomFcResult.durationMs,
-    };
-  } catch (err) {
-    results.attom_foreclosure = { status: "error", message: (err as Error).message };
-  }
+  // ── Disabled agents (for reference) ────────────────────────────
 
-  // Test County Records
-  try {
-    const countyResult = await searchNODFilings("maricopa", "AZ");
-    results.county_records = {
-      status: "ok",
-      found: countyResult.properties.length,
-      errors: countyResult.errors.map(e => e.message),
-      duration: countyResult.durationMs,
-    };
-  } catch (err) {
-    results.county_records = { status: "error", message: (err as Error).message };
-  }
+  results.disabled_agents = {
+    attom_preforeclosure_search: "disabled — 404 on trial plan",
+    attom_foreclosure_search: "disabled — 404 on trial plan",
+    county_records: "disabled — requires browser automation",
+    foreclosure_sites: "disabled — target sites dead",
+  };
 
-  // Test Foreclosure Sites
-  try {
-    const fcSitesResult = await searchAllForeclosureSites("Phoenix", "AZ");
-    results.foreclosure_sites = {
-      status: "ok",
-      found: fcSitesResult.properties.length,
-      errors: fcSitesResult.errors.map(e => e.message),
-      duration: fcSitesResult.durationMs,
-    };
-  } catch (err) {
-    results.foreclosure_sites = { status: "error", message: (err as Error).message };
-  }
+  // ── Environment check ──────────────────────────────────────────
 
-  // Environment check
   results.env_check = {
     has_rapidapi_key: !!process.env.RAPIDAPI_KEY,
     has_rapidapi_zillow_host: !!process.env.RAPIDAPI_ZILLOW_HOST,

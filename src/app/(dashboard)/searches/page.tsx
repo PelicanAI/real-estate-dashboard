@@ -55,6 +55,91 @@ interface ScrapeLog {
   started_at: string;
 }
 
+const DISABLED_AGENT_PATTERNS = [
+  /disabled/i,
+  /not supported in serverless/i,
+  /404 on trial/i,
+  /endpoint not available/i,
+  /requires browser automation/i,
+  /target sites? dead/i,
+];
+
+function isDisabledAgentError(msg: string): boolean {
+  return DISABLED_AGENT_PATTERNS.some((p) => p.test(msg));
+}
+
+function cleanErrorMessage(raw: string | null): string | null {
+  if (!raw) return null;
+  const parts = raw.split(";").map((s) => s.trim()).filter(Boolean);
+  const meaningful = parts.filter((p) => !isDisabledAgentError(p));
+  if (meaningful.length === 0) return null;
+  return meaningful.join("; ");
+}
+
+function getEffectiveStatus(log: ScrapeLog): string {
+  if (log.status === "failed" && !cleanErrorMessage(log.error_message)) {
+    return "completed";
+  }
+  return log.status;
+}
+
+function ScrapeLogRow({
+  log,
+  effectiveStatus,
+  cleanError,
+}: {
+  log: ScrapeLog;
+  effectiveStatus: string;
+  cleanError: string | null;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const truncateLen = 120;
+  const needsTruncate = cleanError && cleanError.length > truncateLen;
+
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-border/30 px-4 py-2 text-sm">
+      <div className="mt-0.5">
+        {effectiveStatus === "completed" ? (
+          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+        ) : effectiveStatus === "failed" ? (
+          <XCircle className="h-4 w-4 text-destructive" />
+        ) : (
+          <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
+        )}
+      </div>
+      <div className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="font-medium">{log.source}</span>
+        <span className="text-muted-foreground">
+          {log.properties_found ?? 0} found, {log.new_properties ?? 0} new
+        </span>
+        {log.duration_ms != null && (
+          <span className="font-mono-numbers text-xs text-muted-foreground">
+            {((log.duration_ms ?? 0) / 1000).toFixed(1)}s
+          </span>
+        )}
+        {cleanError && (
+          <span className="basis-full text-xs text-destructive">
+            {needsTruncate && !expanded
+              ? cleanError.slice(0, truncateLen) + "…"
+              : cleanError}
+            {needsTruncate && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="ml-1 text-muted-foreground underline"
+              >
+                {expanded ? "less" : "details"}
+              </button>
+            )}
+          </span>
+        )}
+      </div>
+      <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+        {formatDistanceToNow(new Date(log.started_at), { addSuffix: true })}
+      </span>
+    </div>
+  );
+}
+
 export default function SearchesPage() {
   const [searches, setSearches] = useState<SavedSearch[]>([]);
   const [logs, setLogs] = useState<ScrapeLog[]>([]);
@@ -318,35 +403,18 @@ export default function SearchesPage() {
         <div className="space-y-3">
           <h2 className="text-lg font-semibold">Recent Scrape Logs</h2>
           <div className="space-y-2">
-            {logs.slice(0, 10).map((log) => (
-              <div
-                key={log.id}
-                className="flex items-center gap-3 rounded-lg border border-border/30 px-4 py-2 text-sm"
-              >
-                {log.status === "completed" ? (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                ) : log.status === "failed" ? (
-                  <XCircle className="h-4 w-4 text-destructive" />
-                ) : (
-                  <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
-                )}
-                <span className="font-medium">{log.source}</span>
-                <span className="text-muted-foreground">
-                  {log.properties_found ?? 0} found, {log.new_properties ?? 0} new
-                </span>
-                {log.duration_ms && (
-                  <span className="font-mono-numbers text-xs text-muted-foreground">
-                    {((log.duration_ms ?? 0) / 1000).toFixed(1)}s
-                  </span>
-                )}
-                {log.error_message && (
-                  <span className="text-xs text-destructive">{log.error_message}</span>
-                )}
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(log.started_at), { addSuffix: true })}
-                </span>
-              </div>
-            ))}
+            {logs.slice(0, 10).map((log) => {
+              const effectiveStatus = getEffectiveStatus(log);
+              const cleanError = cleanErrorMessage(log.error_message);
+              return (
+                <ScrapeLogRow
+                  key={log.id}
+                  log={log}
+                  effectiveStatus={effectiveStatus}
+                  cleanError={cleanError}
+                />
+              );
+            })}
           </div>
         </div>
       )}
