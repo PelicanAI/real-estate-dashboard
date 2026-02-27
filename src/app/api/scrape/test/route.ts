@@ -9,23 +9,54 @@ export const maxDuration = 60;
 export async function GET(request: NextRequest) {
   const results: Record<string, any> = {};
 
-  // Direct API test with hardcoded URL
+  // Test 1 - raw URL string (no encoding)
   try {
-    const testRes = await fetch('https://real-estate101.p.rapidapi.com/api/search/byurl?url=https%3A%2F%2Fwww.zillow.com%2Fphoenix-az%2F&page=1', {
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY!,
-        'X-RapidAPI-Host': 'real-estate101.p.rapidapi.com',
-      },
-    });
-    const testData = await testRes.json();
-    results.zillow_direct_test = {
-      status: testRes.status,
-      success: testData.success,
-      resultCount: testData.results?.length ?? 0,
-      totalCount: testData.totalCount,
+    const rawRes = await fetch(
+      'https://real-estate101.p.rapidapi.com/api/search/byurl?url=https://www.zillow.com/phoenix-az/&page=1',
+      {
+        headers: {
+          'X-RapidAPI-Key': process.env.RAPIDAPI_KEY!,
+          'X-RapidAPI-Host': 'real-estate101.p.rapidapi.com',
+        },
+      }
+    );
+    const rawText = await rawRes.text();
+    let rawData: any = {};
+    try { rawData = JSON.parse(rawText); } catch {}
+    results.zillow_raw_url_test = {
+      status: rawRes.status,
+      success: rawData.success,
+      resultCount: rawData.results?.length ?? 0,
+      totalCount: rawData.totalCount,
+      bodyPreview: rawRes.status !== 200 ? rawText.slice(0, 200) : undefined,
     };
   } catch (err) {
-    results.zillow_direct_test = { error: (err as Error).message };
+    results.zillow_raw_url_test = { error: (err as Error).message };
+  }
+
+  // Test 2 - URL-encoded
+  try {
+    const encRes = await fetch(
+      `https://real-estate101.p.rapidapi.com/api/search/byurl?url=${encodeURIComponent('https://www.zillow.com/phoenix-az/')}&page=1`,
+      {
+        headers: {
+          'X-RapidAPI-Key': process.env.RAPIDAPI_KEY!,
+          'X-RapidAPI-Host': 'real-estate101.p.rapidapi.com',
+        },
+      }
+    );
+    const encText = await encRes.text();
+    let encData: any = {};
+    try { encData = JSON.parse(encText); } catch {}
+    results.zillow_encoded_url_test = {
+      status: encRes.status,
+      success: encData.success,
+      resultCount: encData.results?.length ?? 0,
+      totalCount: encData.totalCount,
+      bodyPreview: encRes.status !== 200 ? encText.slice(0, 200) : undefined,
+    };
+  } catch (err) {
+    results.zillow_encoded_url_test = { error: (err as Error).message };
   }
 
   // Test Zillow/RapidAPI
