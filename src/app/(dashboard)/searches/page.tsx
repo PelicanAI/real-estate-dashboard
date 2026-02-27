@@ -179,8 +179,8 @@ export default function SearchesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Saved Searches</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-heading text-lg">Saved Searches</h1>
+          <p className="mt-1 text-xs font-light text-muted-foreground">
             Automated property scraping schedules
           </p>
         </div>

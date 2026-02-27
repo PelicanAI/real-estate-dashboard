@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -57,19 +58,22 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <Zap className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">DealFinder</h1>
-          <p className="text-sm text-muted-foreground">
+        <div className="mb-10 flex flex-col items-center gap-4">
+          <Image
+            src="/elevate-logo-circle.png"
+            alt="Elevate Global"
+            width={56}
+            height={56}
+          />
+          <h1 className="text-heading text-lg">Elevate Global</h1>
+          <p className="text-xs font-light text-muted-foreground tracking-wider">
             Distressed property pipeline management
           </p>
         </div>
 
-        <Card className="border-border/50">
+        <Card>
           <CardHeader className="pb-4">
-            <CardTitle>{isSignUp ? "Create Account" : "Sign In"}</CardTitle>
+            <CardTitle className="text-sm">{isSignUp ? "Create Account" : "Sign In"}</CardTitle>
             <CardDescription>
               {isSignUp
                 ? "Create your account to start finding deals"
@@ -80,7 +84,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {isSignUp && (
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name" className="text-xs font-light uppercase tracking-wider text-muted-foreground">Full Name</Label>
                   <Input
                     id="name"
                     value={fullName}
@@ -91,7 +95,7 @@ export default function LoginPage() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-xs font-light uppercase tracking-wider text-muted-foreground">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -102,7 +106,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-xs font-light uppercase tracking-wider text-muted-foreground">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -124,7 +128,7 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-4 text-center text-sm text-muted-foreground">
+            <div className="mt-4 text-center text-xs font-light text-muted-foreground">
               {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
               <button
                 type="button"
@@ -132,7 +136,7 @@ export default function LoginPage() {
                   setIsSignUp(!isSignUp);
                   setError("");
                 }}
-                className="text-primary underline-offset-4 hover:underline"
+                className="text-taupe underline-offset-4 hover:underline"
               >
                 {isSignUp ? "Sign In" : "Sign Up"}
               </button>

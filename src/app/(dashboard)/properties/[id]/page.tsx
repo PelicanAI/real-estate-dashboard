@@ -110,7 +110,7 @@ export default function PropertyDetailPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{p.address as string}</h1>
+            <h1 className="text-heading text-lg">{p.address as string}</h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-3 w-3" />
               {p.city as string}, {p.state as string} {p.zip as string}
@@ -149,7 +149,7 @@ export default function PropertyDetailPage() {
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">Est. Price</p>
-                  <p className="font-mono-numbers text-lg font-bold text-primary">
+                  <p className="font-mono-numbers text-lg font-bold text-taupe-light">
                     {fmt(p.estimated_price as number)}
                   </p>
                 </div>
@@ -296,7 +296,7 @@ export default function PropertyDetailPage() {
                   href={p.zillow_url as string}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                  className="flex items-center gap-2 text-sm text-taupe hover:underline"
                 >
                   <ExternalLink className="h-3 w-3" />
                   View on Zillow
@@ -307,7 +307,7 @@ export default function PropertyDetailPage() {
                   href={p.source_url as string}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                  className="flex items-center gap-2 text-sm text-taupe hover:underline"
                 >
                   <ExternalLink className="h-3 w-3" />
                   Original Source

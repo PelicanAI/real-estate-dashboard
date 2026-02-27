@@ -137,7 +137,7 @@ export default function DealDetailPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-heading text-lg">
               {(property?.address as string) || "Deal Details"}
             </h1>
             {property && (
@@ -264,7 +264,7 @@ export default function DealDetailPage() {
                 <div className="space-y-3">
                   {activities.map((a, i) => (
                     <div key={i} className="flex items-start gap-3">
-                      <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
+                      <div className="mt-1 h-2 w-2 bg-taupe" />
                       <div className="flex-1">
                         <p className="text-sm">{a.action as string}</p>
                         {a.details ? (
@@ -345,7 +345,7 @@ export default function DealDetailPage() {
                 </div>
                 <Link
                   href={`/properties/${property.id}`}
-                  className="inline-block pt-2 text-xs text-primary hover:underline"
+                  className="inline-block pt-2 text-xs text-taupe hover:underline"
                 >
                   View full property details
                 </Link>

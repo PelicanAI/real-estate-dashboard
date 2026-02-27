@@ -25,16 +25,16 @@ export function StatsCards({ stats }: StatsCardsProps) {
       value: stats?.totalLeads ?? 0,
       formatted: String(stats?.totalLeads ?? 0),
       icon: Building2,
-      color: "text-blue-400",
-      bg: "bg-blue-400/10",
+      color: "text-taupe-light",
+      bg: "bg-taupe/10",
     },
     {
       label: "Pipeline Value",
       value: stats?.pipelineValue ?? 0,
       formatted: formatCurrency(stats?.pipelineValue ?? 0),
       icon: TrendingUp,
-      color: "text-amber-400",
-      bg: "bg-amber-400/10",
+      color: "text-taupe",
+      bg: "bg-taupe/10",
     },
     {
       label: "Expected Commission",
@@ -57,14 +57,14 @@ export function StatsCards({ stats }: StatsCardsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
-        <Card key={card.label} className="border-border/50">
+        <Card key={card.label}>
           <CardContent className="flex items-center gap-4 p-5">
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${card.bg}`}>
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center ${card.bg}`}>
               <card.icon className={`h-5 w-5 ${card.color}`} />
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
-              <p className="font-mono-numbers text-xl font-bold">{card.formatted}</p>
+              <p className="text-[10px] font-light uppercase tracking-[0.15em] text-muted-foreground">{card.label}</p>
+              <p className="font-mono-numbers text-xl font-semibold">{card.formatted}</p>
             </div>
           </CardContent>
         </Card>

@@ -3,13 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const STAGES = [
-  { key: "Lead", color: "bg-blue-500" },
-  { key: "Contacted", color: "bg-indigo-500" },
-  { key: "Offer Sent", color: "bg-purple-500" },
-  { key: "Under Contract", color: "bg-amber-500" },
+  { key: "Lead", color: "bg-taupe/60" },
+  { key: "Contacted", color: "bg-taupe/70" },
+  { key: "Offer Sent", color: "bg-taupe/80" },
+  { key: "Under Contract", color: "bg-taupe-light/70" },
   { key: "Closed - Acquired", color: "bg-emerald-500" },
-  { key: "Rehab", color: "bg-orange-500" },
-  { key: "Listed", color: "bg-cyan-500" },
+  { key: "Rehab", color: "bg-amber-500" },
+  { key: "Listed", color: "bg-taupe-light" },
   { key: "Sold", color: "bg-emerald-600" },
 ];
 
@@ -23,9 +23,9 @@ export function PipelineMini({ dealsByStage }: PipelineMiniProps) {
     : 0;
 
   return (
-    <Card className="border-border/50">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-base">Pipeline Overview</CardTitle>
+        <CardTitle>Pipeline Overview</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {STAGES.map((stage) => {
@@ -34,12 +34,12 @@ export function PipelineMini({ dealsByStage }: PipelineMiniProps) {
           return (
             <div key={stage.key} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{stage.key}</span>
-                <span className="font-mono-numbers font-medium">{count}</span>
+                <span className="text-xs font-light text-muted-foreground">{stage.key}</span>
+                <span className="font-mono-numbers text-xs font-medium">{count}</span>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-accent">
+              <div className="h-1 w-full overflow-hidden bg-accent">
                 <div
-                  className={`h-full rounded-full ${stage.color} transition-all`}
+                  className={`h-full ${stage.color} transition-all`}
                   style={{ width: `${pct}%` }}
                 />
               </div>

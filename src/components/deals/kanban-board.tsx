@@ -29,13 +29,13 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 
 const STAGES = [
-  { key: "Lead", color: "bg-blue-500", text: "text-blue-400" },
-  { key: "Contacted", color: "bg-indigo-500", text: "text-indigo-400" },
-  { key: "Offer Sent", color: "bg-purple-500", text: "text-purple-400" },
-  { key: "Under Contract", color: "bg-amber-500", text: "text-amber-400" },
+  { key: "Lead", color: "bg-taupe/40", text: "text-taupe" },
+  { key: "Contacted", color: "bg-taupe/55", text: "text-taupe" },
+  { key: "Offer Sent", color: "bg-taupe/70", text: "text-taupe-light" },
+  { key: "Under Contract", color: "bg-taupe-light/60", text: "text-taupe-light" },
   { key: "Closed - Acquired", color: "bg-emerald-500", text: "text-emerald-400" },
-  { key: "Rehab", color: "bg-orange-500", text: "text-orange-400" },
-  { key: "Listed", color: "bg-cyan-500", text: "text-cyan-400" },
+  { key: "Rehab", color: "bg-amber-500", text: "text-amber-400" },
+  { key: "Listed", color: "bg-taupe-light", text: "text-taupe-light" },
   { key: "Sold", color: "bg-emerald-600", text: "text-emerald-500" },
 ] as const;
 
@@ -70,12 +70,12 @@ function DealCard({ deal }: { deal: Deal }) {
 
   return (
     <Link href={`/deals/${deal.id}`}>
-      <Card className="cursor-pointer border-border/40 transition-all hover:border-border hover:bg-accent/30">
+      <Card className="cursor-pointer border-border/30 transition-all hover:border-taupe/30 hover:bg-white/[0.02]">
         <CardContent className="p-3">
           <p className="text-sm font-medium leading-tight">
             {deal.property?.address || "Unknown Property"}
           </p>
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground font-light">
             <MapPin className="h-2.5 w-2.5" />
             {deal.property?.city}, {deal.property?.state}
           </div>
@@ -92,7 +92,7 @@ function DealCard({ deal }: { deal: Deal }) {
             )}
           </div>
 
-          <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground">
+          <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground font-light">
             <Clock className="h-2.5 w-2.5" />
             {formatDistanceToNow(new Date(deal.created_at), { addSuffix: true })}
           </div>
@@ -137,11 +137,11 @@ function KanbanColumn({
   textColor: string;
 }) {
   return (
-    <div className="flex w-72 shrink-0 flex-col rounded-lg bg-accent/20">
-      <div className="flex items-center gap-2 border-b border-border/30 px-3 py-2.5">
-        <div className={`h-2 w-2 rounded-full ${color}`} />
-        <span className={`text-sm font-semibold ${textColor}`}>{stage}</span>
-        <Badge variant="secondary" className="ml-auto text-[10px]">
+    <div className="flex w-72 shrink-0 flex-col bg-accent/30">
+      <div className="flex items-center gap-2 border-b border-border/20 px-3 py-2.5">
+        <div className={`h-1.5 w-1.5 ${color}`} />
+        <span className={`text-[11px] font-light uppercase tracking-[0.15em] ${textColor}`}>{stage}</span>
+        <Badge variant="secondary" className="ml-auto">
           {deals.length}
         </Badge>
       </div>
@@ -152,7 +152,7 @@ function KanbanColumn({
               <SortableDealCard key={deal.id} deal={deal} />
             ))}
             {deals.length === 0 && (
-              <div className="py-8 text-center text-xs text-muted-foreground/50">
+              <div className="py-8 text-center text-[11px] font-light text-muted-foreground/40">
                 No deals
               </div>
             )}

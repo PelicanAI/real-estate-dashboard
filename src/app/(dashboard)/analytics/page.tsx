@@ -20,13 +20,13 @@ import {
 import { DollarSign, TrendingUp, Target, Clock } from "lucide-react";
 
 const STAGE_COLORS: Record<string, string> = {
-  Lead: "#3b82f6",
-  Contacted: "#6366f1",
-  "Offer Sent": "#a855f7",
-  "Under Contract": "#f59e0b",
+  Lead: "#98857B",
+  Contacted: "#a8968c",
+  "Offer Sent": "#b8a79d",
+  "Under Contract": "#CCB091",
   "Closed - Acquired": "#10b981",
-  Rehab: "#f97316",
-  Listed: "#06b6d4",
+  Rehab: "#f59e0b",
+  Listed: "#CCB091",
   Sold: "#059669",
 };
 
@@ -60,13 +60,13 @@ export default function AnalyticsPage() {
     : [];
 
   const funnelData = [
-    { name: "Leads", value: dealsByStage?.Lead || 0, fill: "#3b82f6" },
-    { name: "Contacted", value: dealsByStage?.Contacted || 0, fill: "#6366f1" },
-    { name: "Offers", value: dealsByStage?.["Offer Sent"] || 0, fill: "#a855f7" },
+    { name: "Leads", value: dealsByStage?.Lead || 0, fill: "#98857B" },
+    { name: "Contacted", value: dealsByStage?.Contacted || 0, fill: "#a8968c" },
+    { name: "Offers", value: dealsByStage?.["Offer Sent"] || 0, fill: "#b8a79d" },
     {
       name: "Contracts",
       value: dealsByStage?.["Under Contract"] || 0,
-      fill: "#f59e0b",
+      fill: "#CCB091",
     },
     {
       name: "Closed",
@@ -86,7 +86,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
+        <h1 className="text-heading text-lg">Analytics</h1>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-24 w-full" />
@@ -103,8 +103,8 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-heading text-lg">Analytics</h1>
+        <p className="mt-1 text-xs font-light text-muted-foreground">
           Commission tracking and pipeline performance
         </p>
       </div>
@@ -112,7 +112,7 @@ export default function AnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border/50">
           <CardContent className="flex items-center gap-4 p-5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-400/10">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-emerald-400/10">
               <DollarSign className="h-5 w-5 text-emerald-400" />
             </div>
             <div>
@@ -125,8 +125,8 @@ export default function AnalyticsPage() {
         </Card>
         <Card className="border-border/50">
           <CardContent className="flex items-center gap-4 p-5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-amber-400/10">
-              <TrendingUp className="h-5 w-5 text-amber-400" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-taupe/10">
+              <TrendingUp className="h-5 w-5 text-taupe" />
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground">Pipeline</p>
@@ -138,8 +138,8 @@ export default function AnalyticsPage() {
         </Card>
         <Card className="border-border/50">
           <CardContent className="flex items-center gap-4 p-5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-400/10">
-              <Target className="h-5 w-5 text-blue-400" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-taupe/10">
+              <Target className="h-5 w-5 text-taupe-light" />
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground">Total Leads</p>
@@ -151,8 +151,8 @@ export default function AnalyticsPage() {
         </Card>
         <Card className="border-border/50">
           <CardContent className="flex items-center gap-4 p-5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-purple-400/10">
-              <Clock className="h-5 w-5 text-purple-400" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-taupe/10">
+              <Clock className="h-5 w-5 text-taupe" />
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground">Pipeline Value</p>
@@ -180,9 +180,9 @@ export default function AnalyticsPage() {
                       <span className="text-muted-foreground">{item.name}</span>
                       <span className="font-mono-numbers font-medium">{item.value}</span>
                     </div>
-                    <div className="h-6 w-full overflow-hidden rounded bg-accent/50">
+                    <div className="h-6 w-full overflow-hidden bg-accent/50">
                       <div
-                        className="h-full rounded transition-all"
+                        className="h-full transition-all"
                         style={{ width: `${pct}%`, backgroundColor: item.fill }}
                       />
                     </div>
@@ -218,7 +218,7 @@ export default function AnalyticsPage() {
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
+                      borderRadius: "2px",
                     }}
                   />
                 </PieChart>
@@ -253,15 +253,15 @@ export default function AnalyticsPage() {
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
+                    borderRadius: "2px",
                   }}
                   formatter={(value) => [fmt(value as number)]}
                 />
-                <Bar dataKey="earned" fill="#10b981" radius={[4, 4, 0, 0]} name="Earned" />
+                <Bar dataKey="earned" fill="#10b981" radius={0} name="Earned" />
                 <Bar
                   dataKey="expected"
                   fill="#10b98133"
-                  radius={[4, 4, 0, 0]}
+                  radius={0}
                   name="Expected"
                 />
               </BarChart>

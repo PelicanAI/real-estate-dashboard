@@ -40,21 +40,21 @@ const actionLabels: Record<string, string> = {
 export function ActivityFeed({ activities }: { activities: Activity[] }) {
   if (!activities.length) {
     return (
-      <Card className="border-border/50">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-base">Recent Activity</CardTitle>
+          <CardTitle>Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">No recent activity yet.</p>
+          <p className="text-sm font-light text-muted-foreground">No recent activity yet.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border-border/50">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-base">Recent Activity</CardTitle>
+        <CardTitle>Recent Activity</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-[320px]">
@@ -67,20 +67,20 @@ export function ActivityFeed({ activities }: { activities: Activity[] }) {
                   key={activity.id}
                   className="flex items-start gap-3 border-b border-border/30 px-6 py-3 last:border-0"
                 >
-                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent">
+                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center bg-accent">
                     <Icon className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-[10px] font-medium">
+                      <Badge variant="secondary">
                         {actionLabels[activity.action] || activity.action}
                       </Badge>
                     </div>
                     {details?.address && (
-                      <p className="mt-0.5 truncate text-sm">{details.address}</p>
+                      <p className="mt-0.5 truncate text-sm font-light">{details.address}</p>
                     )}
                     {details?.from && details?.to && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
+                      <p className="mt-0.5 text-xs text-muted-foreground font-light">
                         {details.from} → {details.to}
                       </p>
                     )}

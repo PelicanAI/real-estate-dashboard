@@ -43,11 +43,11 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-heading text-lg">Dashboard</h1>
+          <p className="mt-1 text-xs font-light text-muted-foreground">
             Phoenix, AZ / Maricopa County — Distressed property pipeline
           </p>
         </div>
