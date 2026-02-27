@@ -84,40 +84,13 @@ export async function searchProperties(
 
   try {
     if (useApi) {
-      // ── RapidAPI path (bymapbounds endpoint) ──────────────────────
       const citySlug = city.toLowerCase().replace(/\s+/g, '-');
       const stateSlug = state.toLowerCase();
       const slug = `${citySlug}-${stateSlug}`;
       const coords = CITY_COORDS[slug] || { lat: 33.4484, lng: -112.0740 }; // default Phoenix
-      const offset = 0.25; // ~17 miles
+      const boundsOffset = 0.25; // ~17 miles
 
-      const params: Record<string, string> = {
-        north: String(coords.lat + offset),
-        south: String(coords.lat - offset),
-        east: String(coords.lng + offset),
-        west: String(coords.lng - offset),
-        page: '1',
-      };
-
-      // Map distress types to Zillow status filters
-      if (distressType) {
-        const dt = distressType.toLowerCase();
-        if (dt.includes('pre-foreclosure') || dt.includes('nod') || dt.includes('lis pendens')) {
-          params.status = 'PreForeclosure';
-        } else if (dt.includes('auction')) {
-          params.status = 'ForSaleForeclosure';
-        } else if (dt.includes('foreclosure')) {
-          params.status = 'ForSaleForeclosure';
-        } else if (dt.includes('reo') || dt.includes('bank')) {
-          params.status = 'RecentlySold';
-        }
-      }
-
-      console.log('[zillow] bymapbounds params:', JSON.stringify(params));
-
-      await randomDelay(1000, 2000);
-      requestCount++;
-      const data = (await rapidApiFetch('/api/search/bymapbounds', params)) as {
+      let data: {
         results?: Array<Record<string, unknown>>;
         props?: Array<Record<string, unknown>>;
         searchResults?: { listResults?: Array<Record<string, unknown>> };
@@ -126,6 +99,56 @@ export async function searchProperties(
         filteredCount?: number;
         success?: boolean;
       };
+
+      if (!distressType) {
+        // ── No filter: use bymapbounds (simpler, proven to work) ────
+        const params: Record<string, string> = {
+          north: String(coords.lat + boundsOffset),
+          south: String(coords.lat - boundsOffset),
+          east: String(coords.lng + boundsOffset),
+          west: String(coords.lng - boundsOffset),
+          page: '1',
+        };
+        console.log('[zillow] bymapbounds params:', JSON.stringify(params));
+        await randomDelay(1000, 2000);
+        requestCount++;
+        data = (await rapidApiFetch('/api/search/bymapbounds', params)) as typeof data;
+      } else {
+        // ── Distress filter: use byurl with searchQueryState ────────
+        const filterState: Record<string, any> = {
+          sort: { value: 'globalrelevanceex' },
+          isAllHomes: { value: true },
+        };
+
+        const dt = distressType.toLowerCase();
+        if (dt.includes('pre-foreclosure') || dt.includes('nod') || dt.includes('lis pendens')) {
+          filterState.isPreForeclosure = { value: true };
+        } else if (dt.includes('auction')) {
+          filterState.isForSaleForeclosure = { value: true };
+        } else if (dt.includes('foreclosure')) {
+          filterState.isForSaleForeclosure = { value: true };
+          filterState.isPreForeclosure = { value: true };
+        } else if (dt.includes('reo') || dt.includes('bank')) {
+          filterState.isRecentlySold = { value: true };
+        }
+
+        const searchQueryState = JSON.stringify({
+          mapBounds: {
+            north: coords.lat + boundsOffset,
+            south: coords.lat - boundsOffset,
+            east: coords.lng + boundsOffset,
+            west: coords.lng - boundsOffset,
+          },
+          isMapVisible: true,
+          filterState,
+          isListVisible: true,
+        });
+        const zillowUrl = `https://www.zillow.com/${slug}/?searchQueryState=${encodeURIComponent(searchQueryState)}`;
+        console.log('[zillow] byurl with filter:', distressType, '- URL:', zillowUrl.slice(0, 120) + '...');
+        await randomDelay(1000, 2000);
+        requestCount++;
+        data = (await rapidApiFetch('/api/search/byurl', { url: zillowUrl, page: '1' })) as typeof data;
+      }
 
       const listings =
         data.results ??
