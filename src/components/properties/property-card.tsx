@@ -2,17 +2,10 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Building2,
-  MapPin,
-  Bed,
-  Bath,
-  Ruler,
-  DollarSign,
-} from "lucide-react";
 import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
 
-interface Property {
+export interface Property {
   id: string;
   address: string;
   city: string;
@@ -22,6 +15,7 @@ interface Property {
   estimated_price: number | null;
   zillow_zestimate: number | null;
   equity_estimate: number | null;
+  arv_estimate?: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
   sqft: number | null;
@@ -30,19 +24,42 @@ interface Property {
   created_at: string;
 }
 
-const distressColors: Record<string, string> = {
-  "Pre-Foreclosure": "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  NOD: "bg-red-500/10 text-red-400 border-red-500/20",
-  "Lis Pendens": "bg-red-500/10 text-red-400 border-red-500/20",
-  Auction: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  REO: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  "Tax Lien": "bg-orange-500/10 text-orange-400 border-orange-500/20",
-  Probate: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-  Vacant: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-  "Code Violation": "bg-rose-500/10 text-rose-400 border-rose-500/20",
+const distressBorderColors: Record<string, string> = {
+  "Pre-Foreclosure": "border-l-amber-500",
+  NOD: "border-l-red-500",
+  "Lis Pendens": "border-l-red-500",
+  Auction: "border-l-purple-500",
+  REO: "border-l-blue-500",
+  "Tax Lien": "border-l-orange-500",
+  Probate: "border-l-slate-500",
+  Vacant: "border-l-cyan-500",
+  "Code Violation": "border-l-rose-500",
+};
+
+const distressBadgeColors: Record<string, string> = {
+  "Pre-Foreclosure": "bg-amber-500/10 text-amber-400",
+  NOD: "bg-red-500/10 text-red-400",
+  "Lis Pendens": "bg-red-500/10 text-red-400",
+  Auction: "bg-purple-500/10 text-purple-400",
+  REO: "bg-blue-500/10 text-blue-400",
+  "Tax Lien": "bg-orange-500/10 text-orange-400",
+  Probate: "bg-slate-500/10 text-slate-400",
+  Vacant: "bg-cyan-500/10 text-cyan-400",
+  "Code Violation": "bg-rose-500/10 text-rose-400",
 };
 
 function formatPrice(price: number | null) {
+  if (!price) return "—";
+  if (price >= 1_000_000) {
+    return `$${(price / 1_000_000).toFixed(price % 1_000_000 === 0 ? 0 : 1)}M`;
+  }
+  if (price >= 1_000) {
+    return `$${Math.round(price / 1_000)}K`;
+  }
+  return `$${price.toLocaleString()}`;
+}
+
+function formatPriceFull(price: number | null) {
   if (!price) return "—";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -51,81 +68,127 @@ function formatPrice(price: number | null) {
   }).format(price);
 }
 
+function timeAgo(dateStr: string) {
+  try {
+    return formatDistanceToNow(new Date(dateStr), { addSuffix: true });
+  } catch {
+    return "";
+  }
+}
+
 export function PropertyCard({ property }: { property: Property }) {
-  const photoUrl = property.photos?.[0];
+  const borderColor = property.distress_type
+    ? distressBorderColors[property.distress_type] || "border-l-border"
+    : "border-l-border";
+
+  const badgeColor = property.distress_type
+    ? distressBadgeColors[property.distress_type] || "bg-accent text-foreground"
+    : "";
+
+  const specs = [
+    property.bedrooms ? `${property.bedrooms} bd` : null,
+    property.bathrooms ? `${property.bathrooms} ba` : null,
+    property.sqft ? `${property.sqft.toLocaleString()} sqft` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const financials = [
+    property.arv_estimate ? `ARV: ${formatPrice(property.arv_estimate)}` : null,
+    property.equity_estimate && property.equity_estimate > 0
+      ? `Equity: ${formatPrice(property.equity_estimate)}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <Link href={`/properties/${property.id}`}>
-      <Card className="group overflow-hidden border-border/30 transition-colors hover:border-taupe/30 cursor-pointer h-full">
-        <div className="relative h-44 bg-accent">
-          {photoUrl ? (
-            <img
-              src={photoUrl}
-              alt={property.address}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <Building2 className="h-10 w-10 text-muted-foreground/20" />
-            </div>
-          )}
-          {property.distress_type && (
-            <Badge
-              className={`absolute left-2 top-2 border ${
-                distressColors[property.distress_type] || "bg-accent text-foreground"
-              }`}
-            >
-              {property.distress_type}
-            </Badge>
-          )}
-        </div>
+      <Card
+        className={`group border-l-[3px] ${borderColor} cursor-pointer border-border/30 transition-all hover:border-border/60 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 h-full`}
+      >
         <CardContent className="p-4">
-          <h3 className="text-sm font-medium leading-tight group-hover:text-taupe transition-colors">
-            {property.address}
-          </h3>
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground font-light">
-            <MapPin className="h-3 w-3" />
-            {property.city}, {property.state} {property.zip}
-          </div>
-
-          <div className="mt-3">
-            <span className="font-mono-numbers text-lg font-semibold text-foreground">
-              {formatPrice(property.estimated_price)}
+          {/* Top row: badge + price */}
+          <div className="flex items-start justify-between gap-2">
+            {property.distress_type && (
+              <Badge className={`text-[10px] font-medium ${badgeColor}`}>
+                {property.distress_type}
+              </Badge>
+            )}
+            <span className="font-mono-numbers text-base font-semibold text-taupe-light ml-auto">
+              {formatPriceFull(property.estimated_price)}
             </span>
           </div>
 
-          {property.equity_estimate && property.equity_estimate > 0 && (
-            <div className="mt-1.5 flex items-center gap-1 text-xs font-medium text-emerald-400">
-              <DollarSign className="h-3 w-3" />
-              {formatPrice(property.equity_estimate)} est. equity
-            </div>
+          {/* Address */}
+          <h3 className="mt-3 text-sm font-medium leading-tight text-foreground group-hover:text-white">
+            {property.address}
+          </h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {property.city}, {property.state} {property.zip}
+          </p>
+
+          {/* Specs */}
+          {specs && (
+            <p className="mt-3 text-xs text-muted-foreground">{specs}</p>
           )}
 
-          <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground font-light">
-            {property.bedrooms && (
-              <span className="flex items-center gap-1">
-                <Bed className="h-3 w-3" /> {property.bedrooms} bd
-              </span>
-            )}
-            {property.bathrooms && (
-              <span className="flex items-center gap-1">
-                <Bath className="h-3 w-3" /> {property.bathrooms} ba
-              </span>
-            )}
-            {property.sqft && (
-              <span className="flex items-center gap-1">
-                <Ruler className="h-3 w-3" /> {property.sqft.toLocaleString()} sqft
-              </span>
-            )}
-          </div>
-
-          {property.source && (
-            <p className="mt-3 text-[10px] text-muted-foreground/50 font-light">
-              Source: {property.source}
+          {/* Financials */}
+          {financials && (
+            <p className="mt-1.5 text-xs font-medium text-emerald-400">
+              {financials}
             </p>
           )}
+
+          {/* Footer */}
+          <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground/60">
+            <span>{property.source ? `Source: ${property.source}` : ""}</span>
+            <span>{timeAgo(property.created_at)}</span>
+          </div>
         </CardContent>
       </Card>
+    </Link>
+  );
+}
+
+/** Compact list row variant */
+export function PropertyRow({ property }: { property: Property }) {
+  const badgeColor = property.distress_type
+    ? distressBadgeColors[property.distress_type] || "bg-accent text-foreground"
+    : "";
+
+  const specs = [
+    property.bedrooms ? `${property.bedrooms}bd` : null,
+    property.bathrooms ? `${property.bathrooms}ba` : null,
+    property.sqft ? `${property.sqft.toLocaleString()}sqft` : null,
+  ]
+    .filter(Boolean)
+    .join("/");
+
+  return (
+    <Link href={`/properties/${property.id}`}>
+      <div className="group flex items-center gap-4 rounded-md border border-border/30 px-4 py-2.5 transition-all hover:border-border/60 hover:bg-card cursor-pointer">
+        {property.distress_type && (
+          <Badge className={`text-[10px] font-medium shrink-0 ${badgeColor}`}>
+            {property.distress_type}
+          </Badge>
+        )}
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground group-hover:text-white">
+          {property.address}, {property.city}, {property.state}
+        </span>
+        <span className="shrink-0 text-xs text-muted-foreground">{specs}</span>
+        <span className="shrink-0 font-mono-numbers text-sm font-semibold text-taupe-light">
+          {formatPriceFull(property.estimated_price)}
+        </span>
+        {property.arv_estimate ? (
+          <span className="shrink-0 text-xs text-muted-foreground">
+            ARV: {formatPrice(property.arv_estimate)}
+          </span>
+        ) : null}
+        <span className="shrink-0 text-[10px] text-muted-foreground/60">
+          {timeAgo(property.created_at)}
+        </span>
+      </div>
     </Link>
   );
 }

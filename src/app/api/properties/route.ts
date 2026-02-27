@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
     const maxPrice = searchParams.get("max_price");
     const hasEquity = searchParams.get("has_equity");
     const source = searchParams.get("source");
+    const address = searchParams.get("address");
+    const minBeds = searchParams.get("min_beds");
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     const sortBy = searchParams.get("sort_by") || "created_at";
@@ -35,6 +37,8 @@ export async function GET(request: NextRequest) {
     if (hasEquity === "true") query = query.gt("equity_estimate", 0);
     if (hasEquity === "false") query = query.lte("equity_estimate", 0);
     if (source) query = query.eq("source", source);
+    if (address) query = query.ilike("address", `%${address}%`);
+    if (minBeds) query = query.gte("bedrooms", parseInt(minBeds, 10));
 
     const ascending = sortOrder === "asc";
     query = query.order(sortBy, { ascending }).range(from, to);

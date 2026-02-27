@@ -89,8 +89,13 @@ export default function PropertyDetailPage() {
 
   const zillowUrl = (p.zillow_url as string) || (p.source_url as string);
 
+  // Check if financial details have any data
+  const hasFinancialData =
+    p.default_amount || p.loan_balance || p.recording_date || p.auction_date;
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/properties">
@@ -107,7 +112,15 @@ export default function PropertyDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleEnrich} disabled={enriching}>
+          <Button
+            variant={saved ? "default" : "outline"}
+            size="sm"
+            onClick={handleSave}
+          >
+            <Bookmark className={`mr-2 h-4 w-4 ${saved ? "fill-current" : ""}`} />
+            {saved ? "Saved" : "Save"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleEnrich} disabled={enriching}>
             {enriching ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -115,16 +128,9 @@ export default function PropertyDetailPage() {
             )}
             Enrich Data
           </Button>
-          <Button
-            variant={saved ? "default" : "outline"}
-            onClick={handleSave}
-          >
-            <Bookmark className={`mr-2 h-4 w-4 ${saved ? "fill-current" : ""}`} />
-            {saved ? "Saved" : "Save"}
-          </Button>
           {zillowUrl && (
             <a href={zillowUrl} target="_blank" rel="noopener noreferrer">
-              <Button>
+              <Button size="sm">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Open on Zillow
               </Button>
@@ -141,6 +147,7 @@ export default function PropertyDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
+          {/* Property Details */}
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle className="text-base">Property Details</CardTitle>
@@ -210,34 +217,50 @@ export default function PropertyDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Financial Details — only show if data exists */}
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle className="text-base">Financial Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Default Amount</p>
-                  <p className="font-mono-numbers font-medium">{fmt(p.default_amount as number)}</p>
+              {hasFinancialData ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Default Amount</p>
+                    <p className="font-mono-numbers font-medium">
+                      {fmt(p.default_amount as number)}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Loan Balance</p>
+                    <p className="font-mono-numbers font-medium">
+                      {fmt(p.loan_balance as number)}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Recording Date</p>
+                    <p className="text-sm">
+                      {(p.recording_date as string) || "—"}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Auction Date</p>
+                    <p className="text-sm">
+                      {(p.auction_date as string) || "—"}
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Loan Balance</p>
-                  <p className="font-mono-numbers font-medium">{fmt(p.loan_balance as number)}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Recording Date</p>
-                  <p className="text-sm">{(p.recording_date as string) || "—"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Auction Date</p>
-                  <p className="text-sm">{(p.auction_date as string) || "—"}</p>
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Financial details will appear after enrichment.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
 
         <div className="space-y-6">
+          {/* Owner Information */}
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle className="text-base">Owner Information</CardTitle>
@@ -275,6 +298,7 @@ export default function PropertyDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Links */}
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle className="text-base">Links</CardTitle>
