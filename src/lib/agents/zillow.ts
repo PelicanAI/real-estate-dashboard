@@ -18,6 +18,20 @@ import {
 
 const AGENT_NAME = 'zillow';
 
+// City center coordinates for mapBounds (expand as needed)
+const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
+  'phoenix-az': { lat: 33.4484, lng: -112.0740 },
+  'scottsdale-az': { lat: 33.4942, lng: -111.9261 },
+  'mesa-az': { lat: 33.4152, lng: -111.8315 },
+  'tempe-az': { lat: 33.4255, lng: -111.9400 },
+  'glendale-az': { lat: 33.5387, lng: -112.1860 },
+  'chandler-az': { lat: 33.3062, lng: -111.8413 },
+  'gilbert-az': { lat: 33.3528, lng: -111.7890 },
+  'peoria-az': { lat: 33.5806, lng: -112.2374 },
+  'surprise-az': { lat: 33.6292, lng: -112.3680 },
+  'goodyear-az': { lat: 33.4353, lng: -112.3577 },
+};
+
 // ─── RapidAPI Zillow helpers ───────────────────────────────────────
 
 function rapidApiHeaders(): Record<string, string> {
@@ -71,10 +85,19 @@ export async function searchProperties(
   try {
     if (useApi) {
       // ── RapidAPI path (byurl endpoint) ──────────────────────────
-      // The byurl endpoint requires a full Zillow search URL with ?searchQueryState= JSON
+      // The byurl endpoint requires a full Zillow URL with searchQueryState including mapBounds
       const citySlug = city.toLowerCase().replace(/\s+/g, '-');
       const stateSlug = state.toLowerCase();
+      const slug = `${citySlug}-${stateSlug}`;
+      const coords = CITY_COORDS[slug] || { lat: 33.4484, lng: -112.0740 }; // default Phoenix
+      const offset = 0.25; // ~17 miles
       const searchQueryState = JSON.stringify({
+        mapBounds: {
+          north: coords.lat + offset,
+          south: coords.lat - offset,
+          east: coords.lng + offset,
+          west: coords.lng - offset,
+        },
         isMapVisible: true,
         filterState: {
           sort: { value: 'globalrelevanceex' },
@@ -82,7 +105,7 @@ export async function searchProperties(
         },
         isListVisible: true,
       });
-      const zillowUrl = `https://www.zillow.com/${citySlug}-${stateSlug}/?searchQueryState=${encodeURIComponent(searchQueryState)}`;
+      const zillowUrl = `https://www.zillow.com/${slug}/?searchQueryState=${encodeURIComponent(searchQueryState)}`;
       console.log('[zillow] Searching with URL:', zillowUrl);
       const params: Record<string, string> = {
         url: zillowUrl,

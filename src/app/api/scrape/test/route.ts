@@ -12,6 +12,12 @@ export async function GET(request: NextRequest) {
   // Direct API test with full searchQueryState URL
   try {
     const searchQueryState = JSON.stringify({
+      mapBounds: {
+        north: 33.4484 + 0.25,
+        south: 33.4484 - 0.25,
+        east: -112.0740 + 0.25,
+        west: -112.0740 - 0.25,
+      },
       isMapVisible: true,
       filterState: {
         sort: { value: 'globalrelevanceex' },
