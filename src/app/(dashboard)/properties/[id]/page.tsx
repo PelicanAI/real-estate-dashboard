@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -15,14 +14,13 @@ import {
   Bath,
   Ruler,
   Calendar,
-  DollarSign,
   User,
   Phone,
   Mail,
   Home,
   RefreshCw,
   ExternalLink,
-  Plus,
+  Bookmark,
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
@@ -38,10 +36,10 @@ function fmt(val: number | null | undefined) {
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const [property, setProperty] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [enriching, setEnriching] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     fetch(`/api/properties/${id}`)
@@ -65,20 +63,9 @@ export default function PropertyDetailPage() {
     }
   };
 
-  const handleCreateDeal = async () => {
-    try {
-      const res = await fetch("/api/deals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ property_id: id }),
-      });
-      if (!res.ok) throw new Error();
-      const deal = await res.json();
-      toast.success("Deal created");
-      router.push(`/deals/${deal.data?.id || deal.id}`);
-    } catch {
-      toast.error("Failed to create deal");
-    }
+  const handleSave = () => {
+    setSaved(!saved);
+    toast.success(saved ? "Removed from saved" : "Saved for later");
   };
 
   if (loading) {
@@ -99,6 +86,8 @@ export default function PropertyDetailPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = property as any;
+
+  const zillowUrl = (p.zillow_url as string) || (p.source_url as string);
 
   return (
     <div className="space-y-6">
@@ -126,10 +115,21 @@ export default function PropertyDetailPage() {
             )}
             Enrich Data
           </Button>
-          <Button onClick={handleCreateDeal}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Deal
+          <Button
+            variant={saved ? "default" : "outline"}
+            onClick={handleSave}
+          >
+            <Bookmark className={`mr-2 h-4 w-4 ${saved ? "fill-current" : ""}`} />
+            {saved ? "Saved" : "Save"}
           </Button>
+          {zillowUrl && (
+            <a href={zillowUrl} target="_blank" rel="noopener noreferrer">
+              <Button>
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open on Zillow
+              </Button>
+            </a>
+          )}
         </div>
       </div>
 
@@ -233,17 +233,6 @@ export default function PropertyDetailPage() {
                   <p className="text-sm">{(p.auction_date as string) || "—"}</p>
                 </div>
               </div>
-
-              {p.estimated_price && (
-                <div className="mt-4 rounded-lg bg-accent/50 p-4">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Potential Commission (3% acquisition + 1% listing)
-                  </p>
-                  <p className="font-mono-numbers text-xl font-bold text-emerald-400">
-                    {fmt((p.estimated_price as number) * 0.04)}
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

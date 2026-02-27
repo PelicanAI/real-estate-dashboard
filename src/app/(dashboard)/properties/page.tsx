@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { PropertyCard } from "@/components/properties/property-card";
 import { SearchFilters } from "@/components/properties/search-filters";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
@@ -48,6 +49,9 @@ interface Property {
   created_at: string;
 }
 
+const DISTRESS_CHIPS = ["All", "Pre-Foreclosure", "Auction", "REO", "Tax Lien"] as const;
+const CITY_CHIPS = ["All", "Phoenix", "Scottsdale", "Mesa", "Tempe", "Chandler", "Gilbert", "Glendale"] as const;
+
 export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +60,9 @@ export default function PropertiesPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const [distressChip, setDistressChip] = useState<string>("All");
+  const [cityChip, setCityChip] = useState<string>("All");
 
   const fetchProperties = useCallback(
     async (searchFilters: Record<string, unknown> = {}, pageNum = 1) => {
@@ -65,6 +71,8 @@ export default function PropertiesPage() {
         const params = new URLSearchParams();
         params.set("page", String(pageNum));
         params.set("limit", "20");
+        params.set("sort_by", "created_at");
+        params.set("sort_order", "desc");
         Object.entries(searchFilters).forEach(([key, val]) => {
           if (val && (typeof val !== "object" || (Array.isArray(val) && val.length > 0))) {
             if (key === "distressTypes" && Array.isArray(val)) {
@@ -95,23 +103,39 @@ export default function PropertiesPage() {
     fetchProperties();
   }, [fetchProperties]);
 
-  const handleSearch = (searchFilters: Record<string, unknown>) => {
-    setFilters(searchFilters);
-    fetchProperties(searchFilters, 1);
+  const buildFilters = (
+    baseFilters: Record<string, unknown>,
+    distress: string,
+    city: string
+  ) => {
+    const merged = { ...baseFilters };
+    if (distress !== "All") {
+      merged.distressTypes = [distress];
+    } else {
+      delete merged.distressTypes;
+    }
+    if (city !== "All") {
+      merged.city = city;
+    }
+    return merged;
   };
 
-  const handleAddToPipeline = async (propertyId: string) => {
-    try {
-      const res = await fetch("/api/deals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ property_id: propertyId }),
-      });
-      if (!res.ok) throw new Error();
-      toast.success("Added to deal pipeline");
-    } catch {
-      toast.error("Failed to create deal");
-    }
+  const handleSearch = (searchFilters: Record<string, unknown>) => {
+    setFilters(searchFilters);
+    const merged = buildFilters(searchFilters, distressChip, cityChip);
+    fetchProperties(merged, 1);
+  };
+
+  const handleDistressChip = (chip: string) => {
+    setDistressChip(chip);
+    const merged = buildFilters(filters, chip, cityChip);
+    fetchProperties(merged, 1);
+  };
+
+  const handleCityChip = (chip: string) => {
+    setCityChip(chip);
+    const merged = buildFilters(filters, distressChip, chip);
+    fetchProperties(merged, 1);
   };
 
   const handleManualAdd = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -127,11 +151,13 @@ export default function PropertiesPage() {
       if (!res.ok) throw new Error();
       toast.success("Property added");
       setAddDialogOpen(false);
-      fetchProperties(filters, page);
+      fetchProperties(buildFilters(filters, distressChip, cityChip), page);
     } catch {
       toast.error("Failed to add property");
     }
   };
+
+  const currentFilters = buildFilters(filters, distressChip, cityChip);
 
   return (
     <div className="space-y-6">
@@ -139,7 +165,7 @@ export default function PropertiesPage() {
         <div>
           <h1 className="text-heading text-lg">Properties</h1>
           <p className="mt-1 text-xs font-light text-muted-foreground">
-            {totalCount} distressed properties found
+            Showing {totalCount.toLocaleString()} properties
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -238,6 +264,35 @@ export default function PropertiesPage() {
 
       <SearchFilters onSearch={handleSearch} />
 
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground mr-1">Type:</span>
+          {DISTRESS_CHIPS.map((chip) => (
+            <Badge
+              key={chip}
+              variant={distressChip === chip ? "default" : "outline"}
+              className="cursor-pointer transition-colors"
+              onClick={() => handleDistressChip(chip)}
+            >
+              {chip}
+            </Badge>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground mr-1">City:</span>
+          {CITY_CHIPS.map((chip) => (
+            <Badge
+              key={chip}
+              variant={cityChip === chip ? "default" : "outline"}
+              className="cursor-pointer transition-colors"
+              onClick={() => handleCityChip(chip)}
+            >
+              {chip}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -265,11 +320,7 @@ export default function PropertiesPage() {
           }
         >
           {properties.map((property) => (
-            <PropertyCard
-              key={property.id}
-              property={property}
-              onAddToPipeline={handleAddToPipeline}
-            />
+            <PropertyCard key={property.id} property={property} />
           ))}
         </div>
       )}
@@ -280,7 +331,7 @@ export default function PropertiesPage() {
             variant="outline"
             size="sm"
             disabled={page <= 1}
-            onClick={() => fetchProperties(filters, page - 1)}
+            onClick={() => fetchProperties(currentFilters, page - 1)}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -291,7 +342,7 @@ export default function PropertiesPage() {
             variant="outline"
             size="sm"
             disabled={page >= totalPages}
-            onClick={() => fetchProperties(filters, page + 1)}
+            onClick={() => fetchProperties(currentFilters, page + 1)}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>

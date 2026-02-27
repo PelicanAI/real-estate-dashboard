@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
   // ------------------------------------------------------------------
   if (user && pathname === "/login") {
     const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = "/dashboard";
+    dashboardUrl.pathname = "/properties";
     return NextResponse.redirect(dashboardUrl);
   }
 

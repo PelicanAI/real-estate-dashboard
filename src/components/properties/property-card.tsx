@@ -2,7 +2,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Building2,
   MapPin,
@@ -10,8 +9,6 @@ import {
   Bath,
   Ruler,
   DollarSign,
-  Plus,
-  ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -54,108 +51,81 @@ function formatPrice(price: number | null) {
   }).format(price);
 }
 
-export function PropertyCard({
-  property,
-  onAddToPipeline,
-}: {
-  property: Property;
-  onAddToPipeline: (id: string) => void;
-}) {
+export function PropertyCard({ property }: { property: Property }) {
   const photoUrl = property.photos?.[0];
 
   return (
-    <Card className="group overflow-hidden border-border/30 transition-colors hover:border-taupe/30">
-      <div className="relative h-44 bg-accent">
-        {photoUrl ? (
-          <img
-            src={photoUrl}
-            alt={property.address}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <Building2 className="h-10 w-10 text-muted-foreground/20" />
-          </div>
-        )}
-        {property.distress_type && (
-          <Badge
-            className={`absolute left-2 top-2 border ${
-              distressColors[property.distress_type] || "bg-accent text-foreground"
-            }`}
-          >
-            {property.distress_type}
-          </Badge>
-        )}
-      </div>
-      <CardContent className="p-4">
-        <Link href={`/properties/${property.id}`} className="group/link">
-          <h3 className="text-sm font-medium leading-tight group-hover/link:text-taupe transition-colors">
+    <Link href={`/properties/${property.id}`}>
+      <Card className="group overflow-hidden border-border/30 transition-colors hover:border-taupe/30 cursor-pointer h-full">
+        <div className="relative h-44 bg-accent">
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt={property.address}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <Building2 className="h-10 w-10 text-muted-foreground/20" />
+            </div>
+          )}
+          {property.distress_type && (
+            <Badge
+              className={`absolute left-2 top-2 border ${
+                distressColors[property.distress_type] || "bg-accent text-foreground"
+              }`}
+            >
+              {property.distress_type}
+            </Badge>
+          )}
+        </div>
+        <CardContent className="p-4">
+          <h3 className="text-sm font-medium leading-tight group-hover:text-taupe transition-colors">
             {property.address}
           </h3>
-        </Link>
-        <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground font-light">
-          <MapPin className="h-3 w-3" />
-          {property.city}, {property.state} {property.zip}
-        </div>
-
-        <div className="mt-3 flex items-baseline gap-3">
-          <span className="font-mono-numbers text-lg font-semibold text-foreground">
-            {formatPrice(property.estimated_price)}
-          </span>
-          {property.zillow_zestimate && (
-            <span className="text-[11px] text-muted-foreground font-light">
-              Zestimate: {formatPrice(property.zillow_zestimate)}
-            </span>
-          )}
-        </div>
-
-        {property.equity_estimate && property.equity_estimate > 0 && (
-          <div className="mt-1.5 flex items-center gap-1 text-xs font-medium text-emerald-400">
-            <DollarSign className="h-3 w-3" />
-            {formatPrice(property.equity_estimate)} est. equity
+          <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground font-light">
+            <MapPin className="h-3 w-3" />
+            {property.city}, {property.state} {property.zip}
           </div>
-        )}
 
-        <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground font-light">
-          {property.bedrooms && (
-            <span className="flex items-center gap-1">
-              <Bed className="h-3 w-3" /> {property.bedrooms} bd
+          <div className="mt-3">
+            <span className="font-mono-numbers text-lg font-semibold text-foreground">
+              {formatPrice(property.estimated_price)}
             </span>
-          )}
-          {property.bathrooms && (
-            <span className="flex items-center gap-1">
-              <Bath className="h-3 w-3" /> {property.bathrooms} ba
-            </span>
-          )}
-          {property.sqft && (
-            <span className="flex items-center gap-1">
-              <Ruler className="h-3 w-3" /> {property.sqft.toLocaleString()} sqft
-            </span>
-          )}
-        </div>
+          </div>
 
-        <div className="mt-4 flex items-center gap-2">
-          <Button
-            size="sm"
-            className="flex-1"
-            onClick={() => onAddToPipeline(property.id)}
-          >
-            <Plus className="mr-1 h-3 w-3" />
-            Add to Pipeline
-          </Button>
-          <Link href={`/properties/${property.id}`}>
-            <Button size="sm" variant="outline">
-              <ExternalLink className="h-3 w-3" />
-            </Button>
-          </Link>
-        </div>
+          {property.equity_estimate && property.equity_estimate > 0 && (
+            <div className="mt-1.5 flex items-center gap-1 text-xs font-medium text-emerald-400">
+              <DollarSign className="h-3 w-3" />
+              {formatPrice(property.equity_estimate)} est. equity
+            </div>
+          )}
 
-        {property.source && (
-          <p className="mt-2 text-[10px] text-muted-foreground/50 font-light">
-            Source: {property.source}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+          <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground font-light">
+            {property.bedrooms && (
+              <span className="flex items-center gap-1">
+                <Bed className="h-3 w-3" /> {property.bedrooms} bd
+              </span>
+            )}
+            {property.bathrooms && (
+              <span className="flex items-center gap-1">
+                <Bath className="h-3 w-3" /> {property.bathrooms} ba
+              </span>
+            )}
+            {property.sqft && (
+              <span className="flex items-center gap-1">
+                <Ruler className="h-3 w-3" /> {property.sqft.toLocaleString()} sqft
+              </span>
+            )}
+          </div>
+
+          {property.source && (
+            <p className="mt-3 text-[10px] text-muted-foreground/50 font-light">
+              Source: {property.source}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

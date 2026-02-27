@@ -178,7 +178,7 @@ export default function SearchesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-heading text-lg">Saved Searches</h1>
+          <h1 className="text-heading text-lg">Scrape Jobs</h1>
           <p className="mt-1 text-xs font-light text-muted-foreground">
             Automated property scraping schedules
           </p>
@@ -282,7 +282,12 @@ export default function SearchesPage() {
                       </span>
                     )}
                     {search.results_count != null && (
-                      <span>{search.results_count} results</span>
+                      <span>{search.results_count} results last run</span>
+                    )}
+                    {(search as SavedSearch & { total_properties_found?: number }).total_properties_found != null && (
+                      <Badge variant="outline" className="text-[10px] ml-1">
+                        {(search as SavedSearch & { total_properties_found?: number }).total_properties_found} total found
+                      </Badge>
                     )}
                   </div>
                 </div>

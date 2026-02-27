@@ -7,9 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Building2,
-  Handshake,
   Search,
-  BarChart3,
   Settings,
   LogOut,
   ChevronLeft,
@@ -19,11 +17,9 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/properties", label: "Properties", icon: Building2 },
-  { href: "/deals", label: "Deal Pipeline", icon: Handshake },
-  { href: "/searches", label: "Saved Searches", icon: Search },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/searches", label: "Scrape Jobs", icon: Search },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -40,7 +36,7 @@ export function Sidebar() {
     >
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-3">
         {!collapsed && (
-          <Link href="/dashboard" className="flex items-center gap-3">
+          <Link href="/properties" className="flex items-center gap-3">
             <Image
               src="/elevate-logo-circle.png"
               alt="Elevate Global"
