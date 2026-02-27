@@ -71,9 +71,19 @@ export async function searchProperties(
   try {
     if (useApi) {
       // ── RapidAPI path (byurl endpoint) ──────────────────────────
-      // Use a clean Zillow URL — no query params, just the city-state slug with trailing slash
-      const zillowUrl = `https://www.zillow.com/${city.toLowerCase().replace(/\s+/g, '-')}-${state.toLowerCase()}/`;
-      console.log(`[zillow] RapidAPI byurl request URL: ${zillowUrl}`);
+      // The byurl endpoint requires a full Zillow search URL with ?searchQueryState= JSON
+      const citySlug = city.toLowerCase().replace(/\s+/g, '-');
+      const stateSlug = state.toLowerCase();
+      const searchQueryState = JSON.stringify({
+        isMapVisible: true,
+        filterState: {
+          sort: { value: 'globalrelevanceex' },
+          isAllHomes: { value: true },
+        },
+        isListVisible: true,
+      });
+      const zillowUrl = `https://www.zillow.com/${citySlug}-${stateSlug}/?searchQueryState=${encodeURIComponent(searchQueryState)}`;
+      console.log('[zillow] Searching with URL:', zillowUrl);
       const params: Record<string, string> = {
         url: zillowUrl,
         page: '1',
@@ -81,7 +91,6 @@ export async function searchProperties(
 
       await randomDelay(1000, 2000);
       requestCount++;
-      console.log('[zillow] Searching with URL:', params.url || params);
       const data = (await rapidApiFetch('/api/search/byurl', params)) as {
         results?: Array<Record<string, unknown>>;
         props?: Array<Record<string, unknown>>;

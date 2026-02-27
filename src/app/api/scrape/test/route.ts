@@ -9,10 +9,19 @@ export const maxDuration = 60;
 export async function GET(request: NextRequest) {
   const results: Record<string, any> = {};
 
-  // Test 1 - raw URL string (no encoding)
+  // Direct API test with full searchQueryState URL
   try {
-    const rawRes = await fetch(
-      'https://real-estate101.p.rapidapi.com/api/search/byurl?url=https://www.zillow.com/phoenix-az/&page=1',
+    const searchQueryState = JSON.stringify({
+      isMapVisible: true,
+      filterState: {
+        sort: { value: 'globalrelevanceex' },
+        isAllHomes: { value: true },
+      },
+      isListVisible: true,
+    });
+    const testZillowUrl = `https://www.zillow.com/phoenix-az/?searchQueryState=${encodeURIComponent(searchQueryState)}`;
+    const directRes = await fetch(
+      `https://real-estate101.p.rapidapi.com/api/search/byurl?url=${encodeURIComponent(testZillowUrl)}&page=1`,
       {
         headers: {
           'X-RapidAPI-Key': process.env.RAPIDAPI_KEY!,
@@ -20,43 +29,19 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-    const rawText = await rawRes.text();
-    let rawData: any = {};
-    try { rawData = JSON.parse(rawText); } catch {}
-    results.zillow_raw_url_test = {
-      status: rawRes.status,
-      success: rawData.success,
-      resultCount: rawData.results?.length ?? 0,
-      totalCount: rawData.totalCount,
-      bodyPreview: rawRes.status !== 200 ? rawText.slice(0, 200) : undefined,
+    const directText = await directRes.text();
+    let directData: any = {};
+    try { directData = JSON.parse(directText); } catch {}
+    results.zillow_direct_test = {
+      status: directRes.status,
+      success: directData.success,
+      resultCount: directData.results?.length ?? 0,
+      totalCount: directData.totalCount,
+      bodyPreview: directRes.status !== 200 ? directText.slice(0, 200) : undefined,
+      urlSent: testZillowUrl,
     };
   } catch (err) {
-    results.zillow_raw_url_test = { error: (err as Error).message };
-  }
-
-  // Test 2 - URL-encoded
-  try {
-    const encRes = await fetch(
-      `https://real-estate101.p.rapidapi.com/api/search/byurl?url=${encodeURIComponent('https://www.zillow.com/phoenix-az/')}&page=1`,
-      {
-        headers: {
-          'X-RapidAPI-Key': process.env.RAPIDAPI_KEY!,
-          'X-RapidAPI-Host': 'real-estate101.p.rapidapi.com',
-        },
-      }
-    );
-    const encText = await encRes.text();
-    let encData: any = {};
-    try { encData = JSON.parse(encText); } catch {}
-    results.zillow_encoded_url_test = {
-      status: encRes.status,
-      success: encData.success,
-      resultCount: encData.results?.length ?? 0,
-      totalCount: encData.totalCount,
-      bodyPreview: encRes.status !== 200 ? encText.slice(0, 200) : undefined,
-    };
-  } catch (err) {
-    results.zillow_encoded_url_test = { error: (err as Error).message };
+    results.zillow_direct_test = { error: (err as Error).message };
   }
 
   // Test Zillow/RapidAPI
