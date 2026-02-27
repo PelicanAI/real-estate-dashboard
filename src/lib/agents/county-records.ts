@@ -124,6 +124,15 @@ export async function searchNODFilings(
   const properties: ScrapedProperty[] = [];
   let requestCount = 0;
 
+  // County recorder sites block server-side requests (HTTP 403).
+  // This agent requires browser automation (Puppeteer/Playwright) which
+  // is not supported in serverless environments like Vercel.
+  errors.push({
+    message: 'County recorder agent disabled: sites require browser automation, not supported in serverless.',
+    timestamp: new Date().toISOString(),
+  });
+  return { agent: AGENT_NAME, properties, errors, durationMs: Date.now() - start, requestCount };
+
   // Validate county support
   const countyLower = county.toLowerCase();
   const stateLower = state.toLowerCase();

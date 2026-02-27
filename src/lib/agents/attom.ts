@@ -96,14 +96,28 @@ export async function searchPreForeclosures(
     await randomDelay(500, 1000);
     requestCount++;
 
-    const data = (await attomFetch('/property/preforeclosure', {
-      address1: `${city}, ${state}`,
-      page: '1',
-      pageSize: '50',
-    })) as {
-      property?: Array<Record<string, unknown>>;
-      status?: { msg?: string };
-    };
+    // Try multiple endpoint paths — ATTOM API versions vary by plan
+    const endpoints = ['/sale/preforeclosure', '/property/preforeclosureV2', '/property/preforeclosure'];
+    let data: { property?: Array<Record<string, unknown>>; status?: { msg?: string } } = {};
+    let lastErr: Error | null = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        data = (await attomFetch(endpoint, {
+          address1: `${city}, ${state}`,
+          page: '1',
+          pageSize: '50',
+        })) as typeof data;
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err as Error;
+        requestCount++;
+        await randomDelay(300, 600);
+      }
+    }
+
+    if (lastErr) throw lastErr;
 
     if (!data.property || !Array.isArray(data.property)) {
       if (data.status?.msg) {
@@ -159,14 +173,28 @@ export async function searchForeclosures(
     await randomDelay(500, 1000);
     requestCount++;
 
-    const data = (await attomFetch('/property/foreclosure', {
-      address1: `${city}, ${state}`,
-      page: '1',
-      pageSize: '50',
-    })) as {
-      property?: Array<Record<string, unknown>>;
-      status?: { msg?: string };
-    };
+    // Try multiple endpoint paths — ATTOM API versions vary by plan
+    const endpoints = ['/sale/foreclosure', '/property/foreclosureV2', '/property/foreclosure'];
+    let data: { property?: Array<Record<string, unknown>>; status?: { msg?: string } } = {};
+    let lastErr: Error | null = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        data = (await attomFetch(endpoint, {
+          address1: `${city}, ${state}`,
+          page: '1',
+          pageSize: '50',
+        })) as typeof data;
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err as Error;
+        requestCount++;
+        await randomDelay(300, 600);
+      }
+    }
+
+    if (lastErr) throw lastErr;
 
     if (!data.property || !Array.isArray(data.property)) {
       if (data.status?.msg) {

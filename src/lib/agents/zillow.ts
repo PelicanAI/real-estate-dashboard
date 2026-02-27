@@ -70,34 +70,28 @@ export async function searchProperties(
 
   try {
     if (useApi) {
-      // ── RapidAPI path ──────────────────────────────────────────
-      const statusMap: Record<string, string> = {
-        'pre-foreclosure': 'ForSaleByOwner',
-        foreclosure: 'RecentlySold',
-        reo: 'RecentlySold',
-      };
-
+      // ── RapidAPI path (byurl endpoint) ──────────────────────────
+      const zillowUrl = buildZillowSearchUrl(city, state, distressType);
       const params: Record<string, string> = {
-        location: `${city.toLowerCase().replace(/\s+/g, '-')}-${state.toLowerCase()}`,
+        url: zillowUrl,
         page: '1',
       };
 
-      if (distressType && statusMap[distressType]) {
-        params.status = statusMap[distressType];
-      }
-
       await randomDelay(1000, 2000);
       requestCount++;
-      const data = (await rapidApiFetch('/api/search/bylocation', params)) as {
-        props?: Array<Record<string, unknown>>;
+      const data = (await rapidApiFetch('/api/search/byurl', params)) as {
         results?: Array<Record<string, unknown>>;
+        props?: Array<Record<string, unknown>>;
         searchResults?: { listResults?: Array<Record<string, unknown>> };
         data?: Array<Record<string, unknown>>;
+        totalCount?: number;
+        filteredCount?: number;
+        success?: boolean;
       };
 
       const listings =
-        data.props ??
         data.results ??
+        data.props ??
         data.searchResults?.listResults ??
         data.data ??
         [];
@@ -334,7 +328,8 @@ function mapRapidApiListing(
     : typeof listing.bedrooms === 'number' ? listing.bedrooms : null;
   prop.bathrooms = typeof listing.baths === 'number' ? listing.baths
     : typeof listing.bathrooms === 'number' ? listing.bathrooms : null;
-  prop.sqft = typeof listing.livingArea === 'number' ? listing.livingArea : null;
+  prop.sqft = typeof listing.area === 'number' ? listing.area
+    : typeof listing.livingArea === 'number' ? listing.livingArea : null;
   prop.lotSize = typeof listing.lotAreaValue === 'number' ? listing.lotAreaValue : null;
   prop.yearBuilt = typeof listing.yearBuilt === 'number' ? listing.yearBuilt : null;
 

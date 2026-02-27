@@ -514,34 +514,18 @@ export async function searchAllForeclosureSites(
 ): Promise<AgentResult> {
   const start = Date.now();
 
-  const results = await Promise.allSettled([
-    searchForeclosureDotCom(city, state, type),
-    searchHUDHomes(city, state),
-    searchHomePath(city, state),
-    searchHomeSteps(city, state),
-  ]);
-
-  const combined: AgentResult = {
+  // All foreclosure aggregator sites (foreclosure.com, HUD, HomePath, HomeSteps)
+  // return 404/502 or block server-side requests. Disabled to avoid wasting time
+  // and polluting error logs.
+  return {
     agent: AGENT_NAME,
     properties: [],
-    errors: [],
-    durationMs: 0,
+    errors: [{
+      message: 'Foreclosure sites agent disabled: target sites are dead or block server requests.',
+      timestamp: new Date().toISOString(),
+    }],
+    durationMs: Date.now() - start,
     requestCount: 0,
   };
 
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      combined.properties.push(...result.value.properties);
-      combined.errors.push(...result.value.errors);
-      combined.requestCount += result.value.requestCount;
-    } else {
-      combined.errors.push({
-        message: `Foreclosure site agent failed: ${result.reason}`,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }
-
-  combined.durationMs = Date.now() - start;
-  return combined;
 }
