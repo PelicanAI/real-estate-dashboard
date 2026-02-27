@@ -9,6 +9,25 @@ export const maxDuration = 60;
 export async function GET(request: NextRequest) {
   const results: Record<string, any> = {};
 
+  // Direct API test with hardcoded URL
+  try {
+    const testRes = await fetch('https://real-estate101.p.rapidapi.com/api/search/byurl?url=https%3A%2F%2Fwww.zillow.com%2Fphoenix-az%2F&page=1', {
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY!,
+        'X-RapidAPI-Host': 'real-estate101.p.rapidapi.com',
+      },
+    });
+    const testData = await testRes.json();
+    results.zillow_direct_test = {
+      status: testRes.status,
+      success: testData.success,
+      resultCount: testData.results?.length ?? 0,
+      totalCount: testData.totalCount,
+    };
+  } catch (err) {
+    results.zillow_direct_test = { error: (err as Error).message };
+  }
+
   // Test Zillow/RapidAPI
   try {
     const zillowResult = await zillowSearch("Phoenix", "AZ");

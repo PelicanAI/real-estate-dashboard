@@ -81,6 +81,7 @@ export async function searchProperties(
 
       await randomDelay(1000, 2000);
       requestCount++;
+      console.log('[zillow] Searching with URL:', params.url || params);
       const data = (await rapidApiFetch('/api/search/byurl', params)) as {
         results?: Array<Record<string, unknown>>;
         props?: Array<Record<string, unknown>>;
