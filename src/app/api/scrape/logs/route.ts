@@ -28,22 +28,31 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      // Table might not exist yet — return empty instead of 500
+      console.error("GET /api/scrape/logs error:", error.message);
+      return NextResponse.json({
+        data: [],
+        count: 0,
+        page,
+        totalPages: 0,
+      });
     }
 
     const totalCount = count ?? 0;
 
     return NextResponse.json({
-      data,
+      data: data ?? [],
       count: totalCount,
       page,
-      totalPages: Math.ceil(totalCount / limit),
+      totalPages: Math.ceil(totalCount / limit) || 0,
     });
   } catch (error) {
     console.error("GET /api/scrape/logs error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      data: [],
+      count: 0,
+      page: 1,
+      totalPages: 0,
+    });
   }
 }

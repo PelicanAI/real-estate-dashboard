@@ -36,11 +36,13 @@ import { formatDistanceToNow } from "date-fns";
 interface SavedSearch {
   id: string;
   name: string;
-  search_params: Record<string, unknown>;
+  search_params?: Record<string, unknown>;
+  filters?: Record<string, unknown>;
   is_active: boolean;
   frequency: string;
   last_run_at: string | null;
   results_count: number | null;
+  result_count: number | null;
   created_at: string;
 }
 
@@ -48,12 +50,11 @@ interface ScrapeLog {
   id: string;
   source: string;
   status: string;
-  properties_found: number | null;
-  new_properties: number | null;
-  error_message: string | null;
+  records_found: number | null;
+  records_added: number | null;
+  errors: Record<string, string> | null;
   duration_ms: number | null;
-  started_at: string;
-  completed_at: string | null;
+  created_at: string;
 }
 
 export default function SearchesPage() {
@@ -154,7 +155,7 @@ export default function SearchesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.get("name"),
-          search_params: {
+          filters: {
             city: formData.get("city"),
             state: formData.get("state"),
             zip: formData.get("zip"),
@@ -270,8 +271,8 @@ export default function SearchesPage() {
                   </div>
                   <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                     <span>
-                      {(search.search_params as Record<string, unknown>)?.city as string},{" "}
-                      {(search.search_params as Record<string, unknown>)?.state as string}
+                      {((search.search_params ?? search.filters) as Record<string, unknown> | undefined)?.city as string},{" "}
+                      {((search.search_params ?? search.filters) as Record<string, unknown> | undefined)?.state as string}
                     </span>
                     {search.last_run_at && (
                       <span className="flex items-center gap-1">
@@ -282,8 +283,8 @@ export default function SearchesPage() {
                         })}
                       </span>
                     )}
-                    {search.results_count !== null && (
-                      <span>{search.results_count} results</span>
+                    {(search.results_count ?? search.result_count) != null && (
+                      <span>{search.results_count ?? search.result_count} results</span>
                     )}
                   </div>
                 </div>
@@ -328,18 +329,18 @@ export default function SearchesPage() {
                 )}
                 <span className="font-medium">{log.source}</span>
                 <span className="text-muted-foreground">
-                  {log.properties_found ?? 0} found, {log.new_properties ?? 0} new
+                  {log.records_found ?? 0} found, {log.records_added ?? 0} new
                 </span>
                 {log.duration_ms && (
                   <span className="font-mono-numbers text-xs text-muted-foreground">
-                    {(log.duration_ms / 1000).toFixed(1)}s
+                    {((log.duration_ms ?? 0) / 1000).toFixed(1)}s
                   </span>
                 )}
-                {log.error_message && (
-                  <span className="text-xs text-destructive">{log.error_message}</span>
+                {log.errors?.message && (
+                  <span className="text-xs text-destructive">{log.errors.message}</span>
                 )}
                 <span className="ml-auto text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(log.started_at), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
                 </span>
               </div>
             ))}

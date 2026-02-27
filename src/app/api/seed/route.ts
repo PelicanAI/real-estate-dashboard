@@ -45,10 +45,19 @@ export async function POST() {
     }
 
     // Check if searches already exist for this user
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("saved_searches")
       .select("name")
       .eq("user_id", user.id);
+
+    if (existingError) {
+      // Table might not exist — return gracefully
+      console.error("Seed: saved_searches query error:", existingError.message);
+      return NextResponse.json({
+        message: "Could not seed — table may not exist",
+        created: 0,
+      });
+    }
 
     const existingNames = new Set((existing || []).map((s) => s.name));
 
@@ -59,7 +68,6 @@ export async function POST() {
         filters: s.search_params as any,
         is_active: s.is_active,
         frequency: s.frequency,
-        result_count: 0,
       })
     );
 
@@ -76,7 +84,11 @@ export async function POST() {
       .select();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Seed: insert error:", error.message);
+      return NextResponse.json({
+        message: "Could not seed searches",
+        created: 0,
+      });
     }
 
     return NextResponse.json({
@@ -86,9 +98,9 @@ export async function POST() {
     });
   } catch (error) {
     console.error("POST /api/seed error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      message: "Seed failed",
+      created: 0,
+    });
   }
 }

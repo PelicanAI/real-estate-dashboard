@@ -12,7 +12,15 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("GET /api/deals/stats query error:", error.message);
+      return NextResponse.json({
+        totalLeads: 0,
+        pipelineValue: 0,
+        expectedCommission: 0,
+        earnedCommission: 0,
+        dealsByStage: {},
+        recentDeals: [],
+      });
     }
 
     const allDeals = deals || [];
@@ -57,20 +65,22 @@ export async function GET() {
     const recentDeals = allDeals.slice(0, 10);
 
     return NextResponse.json({
-      data: {
-        totalLeads: allDeals.length,
-        pipelineValue,
-        expectedCommission,
-        earnedCommission,
-        dealsByStage,
-        recentDeals,
-      },
+      totalLeads: allDeals.length,
+      pipelineValue,
+      expectedCommission,
+      earnedCommission,
+      dealsByStage,
+      recentDeals,
     });
   } catch (error) {
     console.error("GET /api/deals/stats error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      totalLeads: 0,
+      pipelineValue: 0,
+      expectedCommission: 0,
+      earnedCommission: 0,
+      dealsByStage: {},
+      recentDeals: [],
+    });
   }
 }

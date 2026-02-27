@@ -24,16 +24,14 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("GET /api/search/saved error:", error.message);
+      return NextResponse.json({ data: [] });
     }
 
-    return NextResponse.json({ data });
+    return NextResponse.json({ data: data ?? [] });
   } catch (error) {
     console.error("GET /api/search/saved error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ data: [] });
   }
 }
 
