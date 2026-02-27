@@ -78,8 +78,7 @@ export async function searchProperties(
       };
 
       const params: Record<string, string> = {
-        location: `${city}, ${state}`,
-        home_type: 'Houses',
+        location: `${city.toLowerCase().replace(/\s+/g, '-')}-${state.toLowerCase()}`,
         page: '1',
       };
 
@@ -325,12 +324,16 @@ function mapRapidApiListing(
   prop.latitude = typeof listing.latitude === 'number' ? listing.latitude : null;
   prop.longitude = typeof listing.longitude === 'number' ? listing.longitude : null;
 
-  prop.listPrice = typeof listing.price === 'number' ? listing.price : parsePrice(String(listing.price ?? ''));
+  prop.listPrice = typeof listing.unformattedPrice === 'number'
+    ? listing.unformattedPrice
+    : typeof listing.price === 'number' ? listing.price : parsePrice(String(listing.price ?? ''));
   prop.zestimate = typeof listing.zestimate === 'number' ? listing.zestimate : null;
   prop.estimatedValue = prop.zestimate ?? prop.listPrice;
 
-  prop.bedrooms = typeof listing.bedrooms === 'number' ? listing.bedrooms : null;
-  prop.bathrooms = typeof listing.bathrooms === 'number' ? listing.bathrooms : null;
+  prop.bedrooms = typeof listing.beds === 'number' ? listing.beds
+    : typeof listing.bedrooms === 'number' ? listing.bedrooms : null;
+  prop.bathrooms = typeof listing.baths === 'number' ? listing.baths
+    : typeof listing.bathrooms === 'number' ? listing.bathrooms : null;
   prop.sqft = typeof listing.livingArea === 'number' ? listing.livingArea : null;
   prop.lotSize = typeof listing.lotAreaValue === 'number' ? listing.lotAreaValue : null;
   prop.yearBuilt = typeof listing.yearBuilt === 'number' ? listing.yearBuilt : null;

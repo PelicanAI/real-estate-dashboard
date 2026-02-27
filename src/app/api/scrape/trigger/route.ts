@@ -58,14 +58,18 @@ export async function POST(request: NextRequest) {
 
       const durationMs = Date.now() - startTime;
 
-      // Update scrape log with results
+      // Update scrape log with results (include agent errors)
       await supabase
         .from("scrape_logs")
         .update({
-          status: "completed",
+          status: result.totalFound > 0 ? "completed" : (result.errors.length > 0 ? "failed" : "completed"),
           properties_found: result.totalFound,
           new_properties: result.totalSaved,
           duration_ms: durationMs,
+          error_message: result.errors.length > 0
+            ? result.errors.map((e: any) => e.message).join(' | ')
+            : null,
+          completed_at: new Date().toISOString(),
         })
         .eq("id", scrapeLog!.id);
 
@@ -82,7 +86,14 @@ export async function POST(request: NextRequest) {
         data: {
           scrape_log_id: scrapeLog!.id,
           results_count: result.totalSaved,
+          total_found: result.totalFound,
           duration_ms: durationMs,
+          errors: result.errors,
+          agent_results: result.agentResults.map((r: any) => ({
+            agent: r.agent,
+            found: r.properties.length,
+            errors: r.errors.map((e: any) => e.message),
+          })),
         },
       });
     } catch (scrapeError) {
