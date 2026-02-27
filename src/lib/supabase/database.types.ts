@@ -307,45 +307,36 @@ export type Database = {
       saved_searches: {
         Row: {
           id: string;
-          created_at: string;
-          updated_at: string;
           user_id: string;
           name: string;
           search_params: Json;
-          notify_email: boolean;
-          notify_push: boolean;
+          is_active: boolean;
           frequency: string;
           last_run_at: string | null;
           results_count: number;
-          is_active: boolean;
+          created_at: string;
         };
         Insert: {
           id?: string;
-          created_at?: string;
-          updated_at?: string;
           user_id: string;
           name: string;
           search_params: Json;
-          notify_email?: boolean;
-          notify_push?: boolean;
+          is_active?: boolean;
           frequency?: string;
           last_run_at?: string | null;
           results_count?: number;
-          is_active?: boolean;
+          created_at?: string;
         };
         Update: {
           id?: string;
-          created_at?: string;
-          updated_at?: string;
           user_id?: string;
           name?: string;
           search_params?: Json;
-          notify_email?: boolean;
-          notify_push?: boolean;
+          is_active?: boolean;
           frequency?: string;
           last_run_at?: string | null;
           results_count?: number;
-          is_active?: boolean;
+          created_at?: string;
         };
         Relationships: [
           {
@@ -360,42 +351,39 @@ export type Database = {
       scrape_logs: {
         Row: {
           id: string;
-          started_at: string;
+          saved_search_id: string | null;
           source: string;
           status: string;
           properties_found: number;
           new_properties: number;
-          records_updated: number;
-          records_skipped: number;
           error_message: string | null;
           duration_ms: number | null;
-          metadata: Json | null;
+          started_at: string;
+          completed_at: string | null;
         };
         Insert: {
           id?: string;
-          started_at?: string;
+          saved_search_id?: string | null;
           source: string;
           status: string;
           properties_found?: number;
           new_properties?: number;
-          records_updated?: number;
-          records_skipped?: number;
           error_message?: string | null;
           duration_ms?: number | null;
-          metadata?: Json | null;
+          started_at?: string;
+          completed_at?: string | null;
         };
         Update: {
           id?: string;
-          started_at?: string;
+          saved_search_id?: string | null;
           source?: string;
           status?: string;
           properties_found?: number;
           new_properties?: number;
-          records_updated?: number;
-          records_skipped?: number;
           error_message?: string | null;
           duration_ms?: number | null;
-          metadata?: Json | null;
+          started_at?: string;
+          completed_at?: string | null;
         };
         Relationships: [];
       };

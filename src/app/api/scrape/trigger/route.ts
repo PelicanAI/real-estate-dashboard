@@ -35,9 +35,10 @@ export async function POST(request: NextRequest) {
     const { data: scrapeLog, error: logError } = await supabase
       .from("scrape_logs")
       .insert({
-        source: `saved_search:${saved_search_id}`,
+        saved_search_id: saved_search_id,
+        source: 'manual_trigger',
         status: "running",
-        metadata: { saved_search_id, filters } as any,
+        started_at: new Date().toISOString(),
       })
       .select()
       .single();

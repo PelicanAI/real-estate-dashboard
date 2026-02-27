@@ -219,7 +219,7 @@ export async function runSavedSearch(savedSearchId: string): Promise<Orchestrato
   // Mark as running
   await supabase
     .from('saved_searches')
-    .update({ last_run: new Date().toISOString() })
+    .update({ last_run_at: new Date().toISOString() })
     .eq('id', savedSearchId);
 
   // Run the search with the saved filters
@@ -237,8 +237,8 @@ export async function runSavedSearch(savedSearchId: string): Promise<Orchestrato
   await supabase
     .from('saved_searches')
     .update({
-      results_count: result.totalSaved as any,
-      updated_at: new Date().toISOString(),
+      results_count: result.totalSaved,
+      last_run_at: new Date().toISOString(),
     })
     .eq('id', savedSearchId);
 
@@ -338,23 +338,21 @@ export async function saveProperties(properties: ScrapedProperty[]): Promise<num
       county: p.county,
       latitude: p.latitude,
       longitude: p.longitude,
-      property_type: p.propertyType,
+      distress_type: p.distressTypes?.[0] ?? null,
+      estimated_price: p.estimatedValue ?? p.zestimate ?? p.listPrice,
+      arv: p.arvEstimate ?? null,
       bedrooms: p.bedrooms,
       bathrooms: p.bathrooms,
       sqft: p.sqft,
-      lot_size: p.lotSize,
+      lot_size: p.lotSize ? String(p.lotSize) : null,
       year_built: p.yearBuilt,
-      estimated_price: p.estimatedValue ?? p.zestimate ?? p.listPrice,
-      last_sale_price: p.lastSalePrice,
-      last_sale_date: p.lastSaleDate,
-      owner_name: p.ownerName,
-      owner_occupied: p.ownerOccupied,
-      distress_types: p.distressTypes,
-      equity_estimate: p.equityEstimate,
-      has_equity: p.equityEstimate !== null ? p.equityEstimate > 0 : false,
       source: p.source,
       source_url: p.sourceUrl,
-      scraped_at: p.scrapedAt,
+      zillow_zestimate: p.zestimate ?? null,
+      owner_name: p.ownerName,
+      loan_balance: p.loanBalance,
+      equity_estimate: p.equityEstimate,
+      raw_data: p.rawData ?? null,
       updated_at: new Date().toISOString(),
     }));
 
@@ -387,25 +385,16 @@ export async function logScrapeRun(
 
   const { error } = await supabase.from('scrape_logs').insert({
     saved_search_id: savedSearchId,
-    total_found: result.totalFound,
-    total_after_dedup: result.totalAfterDedup,
-    total_enriched: result.totalEnriched,
-    total_saved: result.totalSaved,
+    source: 'orchestrator',
+    status: result.errors.length > 0 && result.totalSaved === 0 ? 'failed' : 'completed',
+    properties_found: result.totalFound,
+    new_properties: result.totalSaved,
+    error_message: result.errors.length > 0
+      ? result.errors.map(e => e.message).join('; ')
+      : null,
     duration_ms: result.durationMs,
-    errors: result.errors.map((e) => ({
-      message: e.message,
-      code: e.code,
-      url: e.url,
-      timestamp: e.timestamp,
-    })),
-    agent_summaries: result.agentResults.map((r) => ({
-      agent: r.agent,
-      found: r.properties.length,
-      errors: r.errors.length,
-      durationMs: r.durationMs,
-      requestCount: r.requestCount,
-    })),
-    created_at: new Date().toISOString(),
+    started_at: new Date(Date.now() - result.durationMs).toISOString(),
+    completed_at: new Date().toISOString(),
   });
 
   if (error) {

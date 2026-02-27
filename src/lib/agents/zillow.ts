@@ -25,13 +25,14 @@ function rapidApiHeaders(): Record<string, string> {
   if (!key) throw new Error('RAPIDAPI_KEY not set');
   return {
     'X-RapidAPI-Key': key,
-    'X-RapidAPI-Host': 'zillow-com1.p.rapidapi.com',
+    'X-RapidAPI-Host': process.env.RAPIDAPI_ZILLOW_HOST || 'real-estate101.p.rapidapi.com',
     Accept: 'application/json',
   };
 }
 
 async function rapidApiFetch(path: string, params: Record<string, string>): Promise<unknown> {
-  const url = new URL(`https://zillow-com1.p.rapidapi.com${path}`);
+  const host = process.env.RAPIDAPI_ZILLOW_HOST || 'real-estate101.p.rapidapi.com';
+  const url = new URL(`https://${host}${path}`);
   for (const [k, v] of Object.entries(params)) {
     url.searchParams.set(k, v);
   }
@@ -88,16 +89,18 @@ export async function searchProperties(
 
       await randomDelay(1000, 2000);
       requestCount++;
-      const data = (await rapidApiFetch('/propertyExtendedSearch', params)) as {
+      const data = (await rapidApiFetch('/api/search/bylocation', params)) as {
         props?: Array<Record<string, unknown>>;
         results?: Array<Record<string, unknown>>;
         searchResults?: { listResults?: Array<Record<string, unknown>> };
+        data?: Array<Record<string, unknown>>;
       };
 
       const listings =
         data.props ??
         data.results ??
         data.searchResults?.listResults ??
+        data.data ??
         [];
 
       for (const listing of listings) {
@@ -211,7 +214,7 @@ export async function getPropertyDetails(zpid: string): Promise<ScrapedProperty 
   try {
     if (process.env.RAPIDAPI_KEY) {
       await randomDelay(1000, 2000);
-      const data = (await rapidApiFetch('/property', { zpid })) as Record<string, unknown>;
+      const data = (await rapidApiFetch('/api/property-info', { zpid })) as Record<string, unknown>;
       return mapDetailResponse(data);
     }
 
@@ -252,7 +255,7 @@ export async function getZestimate(address: string): Promise<number | null> {
   try {
     if (process.env.RAPIDAPI_KEY) {
       await randomDelay(1000, 2000);
-      const data = (await rapidApiFetch('/propertyByAddress', { address })) as Record<string, unknown>;
+      const data = (await rapidApiFetch('/api/property-info', { address })) as Record<string, unknown>;
       const zest = data.zestimate ?? data.zEstimate ?? null;
       return typeof zest === 'number' ? zest : null;
     }
