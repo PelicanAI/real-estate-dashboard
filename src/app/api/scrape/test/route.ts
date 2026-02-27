@@ -81,62 +81,61 @@ export async function GET(request: NextRequest) {
   const attomKey = process.env.ATTOM_API_KEY;
   if (attomKey) {
     const attomHeaders = { Accept: "application/json", apikey: attomKey };
-    const testAddr1 = encodeURIComponent("4290 E McDowell Rd");
-    const testAddr2 = encodeURIComponent("Phoenix, AZ");
+    const baseUrl = "https://api.gateway.attomdata.com/propertyapi/v1.0.0";
 
-    // Test property/basicprofile
-    try {
-      const res = await fetch(
-        `https://api.gateway.attomdata.com/propertyapi/v1.0.0/property/basicprofile?address1=${testAddr1}&address2=${testAddr2}`,
-        { headers: attomHeaders }
-      );
-      const data = await res.json();
-      const prop = data?.property?.[0];
-      results.attom_basicprofile_test = {
-        status: res.status,
-        hasProperty: !!prop,
-        ownerName: prop?.assessment?.owner?.owner1?.fullName ?? null,
-        error: data?.status?.msg !== "SuccessWithResult" ? data?.status?.msg : null,
-      };
-    } catch (err) {
-      results.attom_basicprofile_test = { error: (err as Error).message };
-    }
+    // Two test addresses:
+    // 1. ATTOM docs example (guaranteed to work if key is valid)
+    // 2. Real Phoenix scraped address with ZIP
+    const testAddresses = [
+      {
+        label: "attom_docs_example",
+        address1: encodeURIComponent("4529 Winona Court"),
+        address2: encodeURIComponent("Denver, CO"),
+      },
+      {
+        label: "phoenix_with_zip",
+        address1: encodeURIComponent("918 W Kathleen Rd"),
+        address2: encodeURIComponent("Phoenix, AZ 85023"),
+      },
+    ];
 
-    // Test property/detail
-    try {
-      const res = await fetch(
-        `https://api.gateway.attomdata.com/propertyapi/v1.0.0/property/detail?address1=${testAddr1}&address2=${testAddr2}`,
-        { headers: attomHeaders }
-      );
-      const data = await res.json();
-      const prop = data?.property?.[0];
-      results.attom_detail_test = {
-        status: res.status,
-        hasProperty: !!prop,
-        ownerName: prop?.assessment?.owner?.owner1?.fullName ?? null,
-        sampleFields: prop ? Object.keys(prop).slice(0, 10) : [],
-        error: data?.status?.msg !== "SuccessWithResult" ? data?.status?.msg : null,
-      };
-    } catch (err) {
-      results.attom_detail_test = { error: (err as Error).message };
-    }
+    for (const addr of testAddresses) {
+      // Test property/detail
+      try {
+        const res = await fetch(
+          `${baseUrl}/property/detail?address1=${addr.address1}&address2=${addr.address2}`,
+          { headers: attomHeaders }
+        );
+        const data = await res.json();
+        const prop = data?.property?.[0];
+        results[`attom_detail_${addr.label}`] = {
+          status: res.status,
+          statusMsg: data?.status?.msg ?? null,
+          hasProperty: !!prop,
+          ownerName: prop?.assessment?.owner?.owner1?.fullName ?? null,
+          sampleFields: prop ? Object.keys(prop).slice(0, 10) : [],
+        };
+      } catch (err) {
+        results[`attom_detail_${addr.label}`] = { error: (err as Error).message };
+      }
 
-    // Test avm/detail
-    try {
-      const res = await fetch(
-        `https://api.gateway.attomdata.com/propertyapi/v1.0.0/avm/detail?address1=${testAddr1}&address2=${testAddr2}`,
-        { headers: attomHeaders }
-      );
-      const data = await res.json();
-      const prop = data?.property?.[0];
-      results.attom_avm_test = {
-        status: res.status,
-        hasProperty: !!prop,
-        avmValue: prop?.avm?.amount?.value ?? null,
-        error: data?.status?.msg !== "SuccessWithResult" ? data?.status?.msg : null,
-      };
-    } catch (err) {
-      results.attom_avm_test = { error: (err as Error).message };
+      // Test avm/detail
+      try {
+        const res = await fetch(
+          `${baseUrl}/avm/detail?address1=${addr.address1}&address2=${addr.address2}`,
+          { headers: attomHeaders }
+        );
+        const data = await res.json();
+        const prop = data?.property?.[0];
+        results[`attom_avm_${addr.label}`] = {
+          status: res.status,
+          statusMsg: data?.status?.msg ?? null,
+          hasProperty: !!prop,
+          avmValue: prop?.avm?.amount?.value ?? null,
+        };
+      } catch (err) {
+        results[`attom_avm_${addr.label}`] = { error: (err as Error).message };
+      }
     }
   } else {
     results.attom_tests = { skipped: true, reason: "ATTOM_API_KEY not set" };
